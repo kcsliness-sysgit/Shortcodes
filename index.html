@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Creation Studio - Master Prompt Builder</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #0b0f19;
+      color: #f8fafc;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #38bdf8;
+      margin-bottom: 20px;
+      font-size: 1.4rem;
+    }
+
+    /* TEXTAREA CARD */
+    .textarea-card {
+      background: #151d30;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .textarea-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .textarea-header span {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    textarea#promptArea {
+      width: 100%;
+      height: 220px;
+      background: #0b0f19;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      resize: vertical;
+      outline: none;
+    }
+
+    /* STORY BOX */
+    .story-card {
+      background: #151d30;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 15px;
+      margin-bottom: 20px;
+    }
+
+    .story-card label {
+      display: block;
+      font-size: 0.85rem;
+      color: #38bdf8;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    textarea#storyInput {
+      width: 100%;
+      height: 60px;
+      background: #0b0f19;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      resize: none;
+    }
+
+    /* BUTTONS */
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.78rem;
+      transition: 0.2s;
+    }
+
+    .btn-primary { background: #0284c7; color: white; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-clean { background: #16a34a; color: white; }
+    .btn-clean:hover { background: #15803d; }
+    .btn-reset { background: #dc2626; color: white; }
+    .btn-reset:hover { background: #b91c1c; }
+
+    /* ACCORDION CATEGORIES */
+    .accordion-item {
+      background: #151d30;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .accordion-header {
+      width: 100%;
+      text-align: left;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 12px 16px;
+      font-size: 0.92rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .accordion-header:hover {
+      background: #283548;
+    }
+
+    .accordion-body {
+      padding: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* OPTION BUTTONS */
+    .option-btn {
+      background: #0b0f19;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+
+    .option-btn:hover {
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+
+    .option-btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <h2>📸 AI Creation Studio Master Prompt Builder</h2>
+
+  <!-- LIVE PROMPT TEXTAREA -->
+  <div class="textarea-card">
+    <div class="textarea-header">
+      <span>Master Prompt Output</span>
+      <div class="actions">
+        <button class="btn-clean" onclick="cleanEmptyHeaders()">✨ Clean Empty Headers</button>
+        <button class="btn-reset" onclick="resetDefaults()">🔄 Reset All</button>
+        <button class="btn-primary" onclick="copyPrompt(this)">📋 Copy Prompt</button>
+      </div>
+    </div>
+    <textarea id="promptArea" readonly></textarea>
+  </div>
+
+  <!-- DYNAMIC CATEGORIES ACCORDION -->
+  <div id="categoriesContainer"></div>
+
+  <!-- STORY / MOOD INPUT BOX -->
+  <div class="story-card">
+    <label>📖 Story / Mood (Custom Text Input):</label>
+    <textarea id="storyInput" placeholder="Type temporary situation/mood here... (e.g. Soft tired morning mood, drinking coffee)" oninput="updateStory()"></textarea>
+  </div>
+</div>
+
+<script>
+// DEFAULT 7 HEADERS
+const defaultHeaders = [
+  "[CHARACTER 1]",
+  "[SCENE]",
+  "[CAMERA]",
+  "[LIGHTING]",
+  "[ENVIRONMENT & REALISM]",
+  "[EFFECTS]",
+  "[STORY / MOOD]"
+];
+
+// MASTER CATEGORIES ARRAY (FULLY POPULATED FROM YOUR DICTIONARY)
+const categoriesData = [
+  // 1. CHARACTER 1
+  {
+    categoryName: "Identity (Avatar)",
+    headerGroup: "[CHARACTER 1]",
+    key: "Identity",
+    options: [
+      { label: "Avatar Simmy 22yrs", code: "@1Ms_" },
+      { label: "Simmy Identity", code: "@1Mi_" },
+      { label: "Simmy Body", code: "@1Ma_" }
+    ]
+  },
+  {
+    categoryName: "Hairstyle",
+    headerGroup: "[CHARACTER 1]",
+    key: "Hairstyle",
+    options: [
+      { label: "Straight Open Hair", code: "HS01" },
+      { label: "Soft Waves", code: "HS02" },
+      { label: "High Ponytail", code: "HS03" },
+      { label: "Low Ponytail", code: "HS04" },
+      { label: "Sleek Low Bun", code: "HS05" },
+      { label: "High Bun", code: "HS06" },
+      { label: "Side Braid", code: "HS07" },
+      { label: "Twin Braids", code: "HS08" },
+      { label: "Curtain Bangs + Open Hair", code: "HS09" },
+      { label: "Side-Swept Bangs + Open Hair", code: "HS10" }
+    ]
+  },
+  {
+    categoryName: "Skin Type",
+    headerGroup: "[CHARACTER 1]",
+    key: "Skin Type",
+    options: [
+      { label: "Raw Natural", code: "ST01" },
+      { label: "Soft Natural", code: "ST02" },
+      { label: "Dewy Skin", code: "ST03" },
+      { label: "Matte Skin", code: "ST04" },
+      { label: "Textured Pores", code: "ST05" },
+      { label: "Freckles Visible", code: "ST06" },
+      { label: "Light Sweaty", code: "ST07" },
+      { label: "Makeup Natural", code: "ST08" },
+      { label: "Glam Finish", code: "ST09" },
+      { label: "Studio Perfect", code: "ST10" }
+    ]
+  },
+  {
+    categoryName: "Skin Tone",
+    headerGroup: "[CHARACTER 1]",
+    key: "Skin Tone",
+    options: [
+      { label: "Cool Fair", code: "TN01" },
+      { label: "Neutral Fair", code: "TN02" },
+      { label: "Warm Fair", code: "TN03" },
+      { label: "Light Wheatish", code: "TN04" },
+      { label: "Natural Wheatish", code: "TN05" },
+      { label: "Warm Wheatish", code: "TN06" },
+      { label: "Golden Tan", code: "TN07" },
+      { label: "Honey Tan", code: "TN08" },
+      { label: "Deep Warm", code: "TN09" },
+      { label: "Rich Brown", code: "TN10" }
+    ]
+  },
+
+  // 3. CAMERA COMPOSITION
+  {
+    categoryName: "Camera Height (CH)",
+    headerGroup: "[CAMERA]",
+    key: "Camera Height",
+    options: [
+      { label: "Ground Level", code: "CH01" },
+      { label: "Knee Level", code: "CH02" },
+      { label: "Waist Level", code: "CH03" },
+      { label: "Eye Level", code: "CH04" },
+      { label: "Chest Level", code: "CH05" },
+      { label: "Head Level", code: "CH06" },
+      { label: "Overhead", code: "CH07" },
+      { label: "Drone", code: "CH08" }
+    ]
+  },
+  {
+    categoryName: "Camera Angle (CA)",
+    headerGroup: "[CAMERA]",
+    key: "Camera Angle",
+    options: [
+      { label: "Front", code: "CA01" },
+      { label: "45 Left", code: "CA02" },
+      { label: "45 Right", code: "CA03" },
+      { label: "Side Profile", code: "CA04" },
+      { label: "Rear", code: "CA05" },
+      { label: "Rear 45", code: "CA06" },
+      { label: "Top Down", code: "CA07" },
+      { label: "Bottom Up", code: "CA08" }
+    ]
+  },
+  {
+    categoryName: "Camera Distance / Framing (CD)",
+    headerGroup: "[CAMERA]",
+    key: "Camera Distance",
+    options: [
+      { label: "Extreme Close", code: "CD01" },
+      { label: "Close", code: "CD02" },
+      { label: "Medium Close", code: "CD03" },
+      { label: "Half Body", code: "CD04" },
+      { label: "Three Quarter", code: "CD05" },
+      { label: "Full Body", code: "CD06" },
+      { label: "Long Shot", code: "CD07" },
+      { label: "Extreme Long Shot", code: "CD08" }
+    ]
+  },
+  {
+    categoryName: "Body Framing (BF)",
+    headerGroup: "[CAMERA]",
+    key: "Body Framing",
+    options: [
+      { label: "Extreme Close-Up", code: "BF01" },
+      { label: "Close-Up", code: "BF02" },
+      { label: "Head Shot", code: "BF03" },
+      { label: "Bust Shot", code: "BF04" },
+      { label: "Waist Shot", code: "BF05" },
+      { label: "Knee Shot", code: "BF06" },
+      { label: "Three-Quarter Body", code: "BF07" },
+      { label: "Full Body", code: "BF08" },
+      { label: "Wide Shot", code: "BF09" },
+      { label: "Environmental Portrait", code: "BF10" }
+    ]
+  },
+  {
+    categoryName: "Lens (LN)",
+    headerGroup: "[CAMERA]",
+    key: "Lens",
+    options: [
+      { label: "24mm Ultra-Wide", code: "LN01" },
+      { label: "35mm Wide", code: "LN02" },
+      { label: "50mm Natural", code: "LN03" },
+      { label: "85mm Portrait", code: "LN04" },
+      { label: "135mm Telephoto", code: "LN05" },
+      { label: "Macro", code: "LN06" },
+      { label: "Phone Lens", code: "LN07" },
+      { label: "Vintage Lens", code: "LN08" },
+      { label: "Soft Portrait Lens", code: "LN09" },
+      { label: "Cinematic Lens", code: "LN10" }
+    ]
+  },
+  {
+    categoryName: "Camera Quality (CQ)",
+    headerGroup: "[CAMERA]",
+    key: "Camera Quality",
+    options: [
+      { label: "Android Entry", code: "CQ01" },
+      { label: "Android Flagship", code: "CQ02" },
+      { label: "iPhone", code: "CQ03" },
+      { label: "Mirrorless", code: "CQ04" },
+      { label: "DSLR", code: "CQ05" },
+      { label: "Studio Camera", code: "CQ06" },
+      { label: "Vintage Digital", code: "CQ07" },
+      { label: "Disposable Camera", code: "CQ08" },
+      { label: "Film Camera", code: "CQ09" },
+      { label: "Social Media Compressed", code: "CQ10" }
+    ]
+  },
+
+  // 4. LIGHTING
+  {
+    categoryName: "Light Type (LT)",
+    headerGroup: "[LIGHTING]",
+    key: "Light Type",
+    options: [
+      { label: "Soft Window Light", code: "LT01" },
+      { label: "Diffused Daylight", code: "LT02" },
+      { label: "Golden Hour", code: "LT03" },
+      { label: "Blue Hour", code: "LT04" },
+      { label: "Studio Softbox", code: "LT05" },
+      { label: "Rim Light", code: "LT06" },
+      { label: "Backlight", code: "LT07" },
+      { label: "Overcast", code: "LT08" },
+      { label: "Practical Indoor Light", code: "LT09" },
+      { label: "Flash Photography", code: "LT10" }
+    ]
+  },
+  {
+    categoryName: "Light Color (LC)",
+    headerGroup: "[LIGHTING]",
+    key: "Light Color",
+    options: [
+      { label: "Neutral White", code: "LC01" },
+      { label: "Warm White", code: "LC02" },
+      { label: "Golden", code: "LC03" },
+      { label: "Soft Orange", code: "LC04" },
+      { label: "Peach Pink", code: "LC05" },
+      { label: "Cool Blue", code: "LC06" },
+      { label: "Cyan", code: "LC07" },
+      { label: "Lavender", code: "LC08" },
+      { label: "Candle Amber", code: "LC09" },
+      { label: "Mixed Ambient", code: "LC10" }
+    ]
+  },
+  {
+    categoryName: "Time Of Day (TD)",
+    headerGroup: "[LIGHTING]",
+    key: "Time Of Day",
+    options: [
+      { label: "Sunrise", code: "TD01" },
+      { label: "Morning", code: "TD02" },
+      { label: "Noon", code: "TD03" },
+      { label: "Afternoon", code: "TD04" },
+      { label: "Golden Hour", code: "TD05" },
+      { label: "Sunset", code: "TD06" },
+      { label: "Blue Hour", code: "TD07" },
+      { label: "Evening", code: "TD08" },
+      { label: "Night", code: "TD09" },
+      { label: "Rainy Day", code: "TD10" }
+    ]
+  },
+
+  // 5. ENVIRONMENT & REALISM
+  {
+    categoryName: "Subject Realism (SR)",
+    headerGroup: "[ENVIRONMENT & REALISM]",
+    key: "Subject Realism",
+    options: [
+      { label: "Highly Polished", code: "SR01" },
+      { label: "Clean Natural", code: "SR02" },
+      { label: "Light Human Variation", code: "SR03" },
+      { label: "Natural Human", code: "SR04" },
+      { label: "Noticeably Natural", code: "SR05" },
+      { label: "Everyday Human", code: "SR06" },
+      { label: "Lived Human", code: "SR07" },
+      { label: "Imperfect Human", code: "SR08" },
+      { label: "Strong Imperfection", code: "SR09" },
+      { label: "Maximum Human Realism", code: "SR10" }
+    ]
+  },
+  {
+    categoryName: "Skin Realism (SK)",
+    headerGroup: "[ENVIRONMENT & REALISM]",
+    key: "Skin Realism",
+    options: [
+      { label: "Beauty Finish", code: "SK01" },
+      { label: "Very Clean", code: "SK02" },
+      { label: "Clean Natural", code: "SK03" },
+      { label: "Soft Natural", code: "SK04" },
+      { label: "Natural Texture", code: "SK05" },
+      { label: "Visible Texture", code: "SK06" },
+      { label: "Pores + Variation", code: "SK07" },
+      { label: "Strong Texture", code: "SK08" },
+      { label: "Minor Imperfections", code: "SK09" },
+      { label: "Maximum Real Skin", code: "SK10" }
+    ]
+  },
+  {
+    categoryName: "Environmental Realism (ER)",
+    headerGroup: "[ENVIRONMENT & REALISM]",
+    key: "Environmental Realism",
+    options: [
+      { label: "Barely Used", code: "ER01" },
+      { label: "Clean Natural", code: "ER02" },
+      { label: "Lightly Used", code: "ER03" },
+      { label: "Normally Used", code: "ER04" },
+      { label: "Everyday Lived-In", code: "ER05" },
+      { label: "Clearly Lived-In", code: "ER06" },
+      { label: "Well Used", code: "ER07" },
+      { label: "Heavily Used", code: "ER08" },
+      { label: "Strongly Worn", code: "ER09" },
+      { label: "Maximum Lived-In", code: "ER10" }
+    ]
+  },
+  {
+    categoryName: "Overall Realism (RL)",
+    headerGroup: "[ENVIRONMENT & REALISM]",
+    key: "Overall Realism",
+    options: [
+      { label: "Studio Clean", code: "RL01" },
+      { label: "Luxury Minimal", code: "RL02" },
+      { label: "Social Media Ready", code: "RL03" },
+      { label: "Everyday Real", code: "RL04" },
+      { label: "Cozy Lived-In", code: "RL05" },
+      { label: "Family Home", code: "RL06" },
+      { label: "Student Room", code: "RL07" },
+      { label: "Busy Home", code: "RL08" },
+      { label: "Documentary Real", code: "RL09" },
+      { label: "Cinematic Natural", code: "RL10" }
+    ]
+  },
+
+  // 6. EFFECTS
+  {
+    categoryName: "Effects (EF01-EF30)",
+    headerGroup: "[EFFECTS]",
+    key: "Effects",
+    options: [
+      { label: "Edge Glass Blur", code: "EF01" }, { label: "Foreground Bokeh", code: "EF02" },
+      { label: "Background Bokeh", code: "EF03" }, { label: "Soft Prism Edge", code: "EF04" },
+      { label: "Soft Reflection", code: "EF05" }, { label: "Curtain Foreground", code: "EF06" },
+      { label: "Plant Foreground", code: "EF07" }, { label: "Pillow Occlusion", code: "EF08" },
+      { label: "Blanket Occlusion", code: "EF09" }, { label: "Natural Prop Occlusion", code: "EF10" },
+      { label: "Hair Veil", code: "EF11" }, { label: "Soft Shadow Veil", code: "EF12" },
+      { label: "Edge Light Leak", code: "EF13" }, { label: "Soft Vignette", code: "EF14" },
+      { label: "Selective Focus Falloff", code: "EF15" }, { label: "Glass Reflection Edge", code: "EF16" },
+      { label: "Soft Bloom", code: "EF17" }, { label: "Soft Glow", code: "EF18" },
+      { label: "Peach Glow", code: "EF19" }, { label: "Pink Light Haze", code: "EF20" },
+      { label: "Dreamy Lens Bloom", code: "EF21" }, { label: "Floating Hearts", code: "EF22" },
+      { label: "Tiny Sparkle Dust", code: "EF23" }, { label: "Soft Star Highlights", code: "EF24" },
+      { label: "Camera Flash Glow", code: "EF25" }, { label: "Soft Film Grain", code: "EF26" },
+      { label: "Polaroid Softness", code: "EF27" }, { label: "Gentle Motion Bloom", code: "EF28" },
+      { label: "Pastel Atmosphere", code: "EF29" }, { label: "Soft Editorial Glow", code: "EF30" }
+    ]
+  }
+];
+
+// STATE STORAGE
+let selections = {};
+let storyText = "";
+
+// INITIALIZE
+window.onload = function() {
+  renderApp();
+  updateTextarea();
+};
+
+// RENDER ACCORDIONS
+function renderApp() {
+  const container = document.getElementById('categoriesContainer');
+  container.innerHTML = '';
+
+  categoriesData.forEach((cat, index) => {
+    const acc = document.createElement('div');
+    acc.className = 'accordion-item';
+
+    acc.innerHTML = `
+      <button class="accordion-header" onclick="toggleAccordion('body-${index}')">
+        <span>${cat.categoryName} <small style="color:#94a3b8">(${cat.headerGroup})</small></span>
+        <span>▼</span>
+      </button>
+      <div id="body-${index}" class="accordion-body" style="display:none;">
+        ${cat.options.map(opt => `
+          <button class="option-btn" onclick="selectOption('${cat.headerGroup}', '${cat.key}', '${opt.code}', this)">
+            ${opt.label} (${opt.code})
+          </button>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(acc);
+  });
+}
+
+// SELECT / REPLACE SHORTCODE
+function selectOption(headerGroup, key, code, btnEl) {
+  const parent = btnEl.parentElement;
+  
+  if (btnEl.classList.contains('active')) {
+    btnEl.classList.remove('active');
+    if (selections[headerGroup] && selections[headerGroup][key]) {
+      delete selections[headerGroup][key];
+    }
+  } else {
+    parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+
+    if(!selections[headerGroup]) {
+      selections[headerGroup] = {};
+    }
+    selections[headerGroup][key] = `${key} = ${code}`;
+  }
+
+  updateTextarea();
+}
+
+// UPDATE MASTER TEXTAREA
+function updateTextarea() {
+  let output = [];
+
+  defaultHeaders.forEach(header => {
+    output.push(header);
+
+    if (selections[header]) {
+      Object.values(selections[header]).forEach(item => {
+        output.push(item);
+      });
+    }
+
+    if (header === "[STORY / MOOD]" && storyText.trim() !== "") {
+      output.push(storyText.trim());
+    }
+
+    output.push(""); // Empty line separator
+  });
+
+  document.getElementById('promptArea').value = output.join('\n').trim();
+}
+
+// UPDATE STORY/MOOD
+function updateStory() {
+  storyText = document.getElementById('storyInput').value;
+  updateTextarea();
+}
+
+// CLEAN EMPTY HEADERS
+function cleanEmptyHeaders() {
+  let output = [];
+
+  defaultHeaders.forEach(header => {
+    let hasContent = false;
+    let items = [];
+
+    if (selections[header] && Object.keys(selections[header]).length > 0) {
+      hasContent = true;
+      items = Object.values(selections[header]);
+    }
+
+    if (header === "[STORY / MOOD]" && storyText.trim() !== "") {
+      hasContent = true;
+      items.push(storyText.trim());
+    }
+
+    if (hasContent) {
+      output.push(header);
+      items.forEach(it => output.push(it));
+      output.push("");
+    }
+  });
+
+  document.getElementById('promptArea').value = output.join('\n').trim();
+}
+
+// RESET ALL
+function resetDefaults() {
+  selections = {};
+  storyText = "";
+  document.getElementById('storyInput').value = '';
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+  updateTextarea();
+}
+
+// COPY PROMPT
+function copyPrompt(btn) {
+  const text = document.getElementById('promptArea').value;
+  if(!text) return;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.innerText;
+    btn.innerText = "✓ Copied!";
+    setTimeout(() => btn.innerText = original, 1200);
+  });
+}
+
+// ACCORDION TOGGLE
+function toggleAccordion(id) {
+  const body = document.getElementById(id);
+  body.style.display = body.style.display === 'none' ? 'flex' : 'none';
+}
+</script>
+
+</body>
+</html>
