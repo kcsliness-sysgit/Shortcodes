@@ -496,9 +496,14 @@ const categoriesData = [
     headerGroup: "[CAMERA]",
     key: "Camera Height",
     options: [
-      { label: "Eye Level", code: "CH04" },
       { label: "Ground Level", code: "CH01" },
-      { label: "Overhead", code: "CH07" }
+      { label: "Knee Level", code: "CH02" },
+      { label: "Waist Level", code: "CH03" },
+      { label: "Eye Level", code: "CH04" },
+      { label: "Chest Level", code: "CH05" },
+      { label: "Head Level", code: "CH06" },
+      { label: "Overhead", code: "CH07" },
+      { label: "Drone", code: "CH08" }
     ]
   },
   {
@@ -507,9 +512,14 @@ const categoriesData = [
     headerGroup: "[CAMERA]",
     key: "Camera Angle",
     options: [
-      { label: "Front", code: "CA01" },
-      { label: "45 Left", code: "CA02" },
-      { label: "Side Profile", code: "CA04" }
+    { label: "Front", code: "CA01" },
+      { label: "45° Left", code: "CA02" },
+      { label: "45° Right", code: "CA03" },
+      { label: "Side Profile", code: "CA04" },
+      { label: "Rear", code: "CA05" },
+      { label: "Rear 45°", code: "CA06" },
+      { label: "Top Down", code: "CA07" },
+      { label: "Bottom Up", code: "CA08" }
     ]
   },
   {
@@ -518,8 +528,16 @@ const categoriesData = [
     headerGroup: "[CAMERA]",
     key: "Body Framing",
     options: [
+      { label: "Extreme Close-Up", code: "BF01" },
+      { label: "Close-Up", code: "BF02" },
+      { label: "Head Shot", code: "BF03" },
       { label: "Bust Shot", code: "BF04" },
-      { label: "Full Body", code: "BF08" }
+      { label: "Waist Shot", code: "BF05" },
+      { label: "Knee Shot", code: "BF06" },
+      { label: "Three-Quarter Body", code: "BF07" },
+      { label: "Full Body", code: "BF08" },
+      { label: "Wide Shot", code: "BF09" },
+      { label: "Environmental Portrait", code: "BF10" }
     ]
   },
   {
@@ -528,8 +546,16 @@ const categoriesData = [
     headerGroup: "[CAMERA]",
     key: "Lens",
     options: [
+      { label: "24mm Ultra-Wide", code: "LN01" },
+      { label: "35mm Wide", code: "LN02" },
       { label: "50mm Natural", code: "LN03" },
-      { label: "85mm Portrait", code: "LN04" }
+      { label: "85mm Portrait", code: "LN04" },
+      { label: "135mm Telephoto", code: "LN05" },
+      { label: "Macro", code: "LN06" },
+      { label: "Phone Lens", code: "LN07" },
+      { label: "Vintage Lens", code: "LN08" },
+      { label: "Soft Portrait Lens", code: "LN09" },
+      { label: "Cinematic Lens", code: "LN10" }
     ]
   },
   {
@@ -538,8 +564,16 @@ const categoriesData = [
     headerGroup: "[CAMERA]",
     key: "Camera Quality",
     options: [
+      { label: "Android Entry", code: "CQ01" },
+      { label: "Android Flagship", code: "CQ02" },
       { label: "iPhone", code: "CQ03" },
-      { label: "DSLR", code: "CQ05" }
+      { label: "Mirrorless", code: "CQ04" },
+      { label: "DSLR", code: "CQ05" },
+      { label: "Studio Camera", code: "CQ06" },
+      { label: "Vintage Digital", code: "CQ07" },
+      { label: "Disposable Camera", code: "CQ08" },
+      { label: "Film Camera", code: "CQ09" },
+      { label: "Social Media Compressed", code: "CQ10" }
     ]
   },
 
@@ -551,7 +585,15 @@ const categoriesData = [
     key: "Light Type",
     options: [
       { label: "Soft Window Light", code: "LT01" },
-      { label: "Golden Hour", code: "LT03" }
+      { label: "Diffused Daylight", code: "LT02" },
+      { label: "Golden Hour", code: "LT03" },
+      { label: "Blue Hour", code: "LT04" },
+      { label: "Studio Softbox", code: "LT05" },
+      { label: "Rim Light", code: "LT06" },
+      { label: "Backlight", code: "LT07" },
+      { label: "Overcast", code: "LT08" },
+      { label: "Practical Indoor Light", code: "LT09" },
+      { label: "Flash Photography", code: "LT10" }
     ]
   },
   {
@@ -561,7 +603,15 @@ const categoriesData = [
     key: "Light Color",
     options: [
       { label: "Neutral White", code: "LC01" },
-      { label: "Warm White", code: "LC02" }
+      { label: "Warm White", code: "LC02" },
+      { label: "Golden", code: "LC03" },
+      { label: "Soft Orange", code: "LC04" },
+      { label: "Peach Pink", code: "LC05" },
+      { label: "Cool Blue", code: "LC06" },
+      { label: "Cyan", code: "LC07" },
+      { label: "Lavender", code: "LC08" },
+      { label: "Candle Amber", code: "LC09" },
+      { label: "Mixed Ambient", code: "LC10" }
     ]
   },
   {
@@ -570,8 +620,16 @@ const categoriesData = [
     headerGroup: "[LIGHTING]",
     key: "Time Of Day",
     options: [
+      { label: "Sunrise", code: "TD01" },
       { label: "Morning", code: "TD02" },
-      { label: "Golden Hour", code: "TD05" }
+      { label: "Noon", code: "TD03" },
+      { label: "Afternoon", code: "TD04" },
+      { label: "Golden Hour", code: "TD05" },
+      { label: "Sunset", code: "TD06" },
+      { label: "Blue Hour", code: "TD07" },
+      { label: "Evening", code: "TD08" },
+      { label: "Night", code: "TD09" },
+      { label: "Rainy Day", code: "TD10" }
     ]
   },
 
@@ -582,8 +640,16 @@ const categoriesData = [
     headerGroup: "[ENVIRONMENT & REALISM]",
     key: "Subject Realism",
     options: [
+      { label: "Highly Polished / Near Perfect", code: "SR01" },
       { label: "Clean Natural", code: "SR02" },
-      { label: "Everyday Human", code: "SR06" }
+      { label: "Light Human Variation", code: "SR03" },
+      { label: "Natural Human", code: "SR04" },
+      { label: "Noticeably Natural", code: "SR05" },
+      { label: "Everyday Human", code: "SR06" },
+      { label: "Lived Human", code: "SR07" },
+      { label: "Imperfect Human", code: "SR08" },
+      { label: "Strong Natural Imperfection", code: "SR09" },
+      { label: "Maximum Human Realism", code: "SR10" }
     ]
   },
   {
@@ -592,8 +658,16 @@ const categoriesData = [
     headerGroup: "[ENVIRONMENT & REALISM]",
     key: "Skin Realism",
     options: [
+      { label: "Near Perfect / Beauty Finish", code: "SK01" },
+      { label: "Very Clean", code: "SK02" },
       { label: "Clean Natural", code: "SK03" },
-      { label: "Visible Texture", code: "SK06" }
+      { label: "Soft Natural", code: "SK04" },
+      { label: "Natural Texture", code: "SK05" },
+      { label: "Visible Texture", code: "SK06" },
+      { label: "Pores + Natural Variation", code: "SK07" },
+      { label: "Strong Natural Texture", code: "SK08" },
+      { label: "Noticeable Minor Imperfections", code: "SK09" },
+      { label: "Maximum Real Human Skin", code: "SK10" }
     ]
   },
   {
@@ -602,7 +676,16 @@ const categoriesData = [
     headerGroup: "[ENVIRONMENT & REALISM]",
     key: "Environmental Realism",
     options: [
-      { label: "Everyday Lived-In", code: "ER05" }
+      { label: "Very Clean / Barely Used", code: "ER01" },
+      { label: "Clean Natural", code: "ER02" },
+      { label: "Lightly Used", code: "ER03" },
+      { label: "Normally Used", code: "ER04" },
+      { label: "Everyday Lived-In", code: "ER05" },
+      { label: "Clearly Lived-In", code: "ER06" },
+      { label: "Well Used", code: "ER07" },
+      { label: "Heavily Used", code: "ER08" },
+      { label: "Strongly Worn / Lived-In", code: "ER09" },
+      { label: "Maximum Used / Naturally Imperfect", code: "ER10" }
     ]
   },
   {
@@ -611,7 +694,15 @@ const categoriesData = [
     headerGroup: "[ENVIRONMENT & REALISM]",
     key: "Overall Realism",
     options: [
+      { label: "Studio Clean", code: "RL01" },
+      { label: "Luxury Minimal", code: "RL02" },
+      { label: "Social Media Ready", code: "RL03" },
       { label: "Everyday Real", code: "RL04" },
+      { label: "Cozy Lived-In", code: "RL05" },
+      { label: "Family Home", code: "RL06" },
+      { label: "Student Room", code: "RL07" },
+      { label: "Busy Home", code: "RL08" },
+      { label: "Documentary Real", code: "RL09" },
       { label: "Cinematic Natural", code: "RL10" }
     ]
   },
