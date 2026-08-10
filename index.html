@@ -979,6 +979,7 @@ function updateStory() {
 }
 
 // CLEAN EMPTY HEADERS
+// CLEAN EMPTY HEADERS & AUTO-NUMBER IMAGES IN SEQUENCE
 function cleanEmptyHeaders() {
   let rawText = document.getElementById('promptArea').value;
   let lines = rawText.split('\n');
@@ -986,6 +987,7 @@ function cleanEmptyHeaders() {
   let currentHeader = "";
   let headerBuffer = [];
 
+  // Step 1: Clean empty headers
   lines.forEach(line => {
     if (line.startsWith('[')) {
       if (headerBuffer.length > 0) {
@@ -1005,7 +1007,19 @@ function cleanEmptyHeaders() {
     headerBuffer.forEach(item => cleaned.push(item));
   }
 
-  document.getElementById('promptArea').value = cleaned.join('\n').trim();
+  // Step 2: Auto-sequence all Image numbers (@ references)
+  let imageCounter = 1;
+  let finalOutput = cleaned.map(line => {
+    if (line.includes('= Image @')) {
+      // Replaces "= Image @" with "= Image 1 @", "= Image 2 @", etc.
+      let updatedLine = line.replace('= Image @', `= Image ${imageCounter} @`);
+      imageCounter++;
+      return updatedLine;
+    }
+    return line;
+  });
+
+  document.getElementById('promptArea').value = finalOutput.join('\n').trim();
 }
 
 // RESET ALL
