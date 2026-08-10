@@ -635,6 +635,34 @@ function selectOption(headerGroup, key, code, btnEl, catId) {
   } else {
     btnEl.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
     btnEl.classList.add('active');
+
+    // DYNAMIC FORMATTING: Check if code starts with '@' or 'Image'
+    const formattedValue = code.startsWith('@') ? `${key} = Image ${code}` : `${key} = ${code}`;
+
+    if (headerGroup === 'CHARACTER') {
+      if (!selections.characterData[activeCharacter]) selections.characterData[activeCharacter] = {};
+      // Assignment using formattedValue
+      selections.characterData[activeCharacter][key] = formattedValue;
+    } else {
+      // Handles Pose Grouping raw values vs @image values
+      selections.globalData[key] = (key === "Pose Grouping" && !code.startsWith('@')) ? code : formattedValue;
+    }
+  }
+
+  updateTextarea();
+}
+
+  // STANDARD TOGGLE SELECT
+  if (btnEl.classList.contains('active')) {
+    btnEl.classList.remove('active');
+    if (headerGroup === 'CHARACTER') {
+      delete selections.characterData[activeCharacter][key];
+    } else {
+      delete selections.globalData[key];
+    }
+  } else {
+    btnEl.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
 const formattedValue = code.startsWith('@') ? `${key} = Image ${code}` : `${key} = ${code}`;
     if (headerGroup === 'CHARACTER') {
       if (!selections.characterData[activeCharacter]) selections.characterData[activeCharacter] = {};
