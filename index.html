@@ -652,28 +652,7 @@ function selectOption(headerGroup, key, code, btnEl, catId) {
   updateTextarea();
 }
 
-  // STANDARD TOGGLE SELECT
-  if (btnEl.classList.contains('active')) {
-    btnEl.classList.remove('active');
-    if (headerGroup === 'CHARACTER') {
-      delete selections.characterData[activeCharacter][key];
-    } else {
-      delete selections.globalData[key];
-    }
-  } else {
-    btnEl.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
-    btnEl.classList.add('active');
-const formattedValue = code.startsWith('@') ? `${key} = Image ${code}` : `${key} = ${code}`;
-    if (headerGroup === 'CHARACTER') {
-      if (!selections.characterData[activeCharacter]) selections.characterData[activeCharacter] = {};
-      selections.characterData[activeCharacter][key] = `${key} = ${code}`;
-    } else {
-      selections.globalData[key] = (key === "Pose Grouping") ? code : `${key} = ${code}`;
-    }
-  }
-
-  updateTextarea();
-}
+  
 
 // CHARACTER TABS CONTROLLER
 function addCharacter() {
