@@ -1,0 +1,432 @@
+# Cell 13 — FULL REPLACEMENT
+# ============================================================
+# 🎵 LYRIC RENDERER — MINIMAL LINE + WORD SUPPORT + EMOJI FIX
+# ============================================================
+# Replace the EXISTING Cell 13 completely with this cell.
+#
+# IMPORTANT:
+# - Stage 1 is untouched.
+# - song_map.json is untouched.
+# - Cell 11 / image timing is untouched.
+# - FFmpeg pipeline remains unchanged.
+# - Existing fonts/text styling remain unchanged.
+# - Emoji assets are READ ONLY.
+#
+# Emoji behavior:
+# - Emoji is attached to the nearest preceding lyric word.
+# - "Jaan 💖" and "Jaan💖" behave identically.
+# - Compound emoji remain one emoji asset.
+# - Asset lookup is EXACT Unicode-codepoint filename matching.
+# - No fuzzy/substring matching.
+#
+# Examples:
+#   Jaan 💖 ki qurbaani
+#      -> Jaan+💖 | ki | qurbaani
+#
+#   Tabaahi pakki 👍 hai
+#      -> Tabaahi | pakki+👍 | hai
+#
+#   Aag 🔥 tu main 💧paani
+#      -> Aag+🔥 | tu | main+💧 | paani
+
+from PIL import Image, ImageDraw, ImageFont
+import os, re, glob, json, math, random, subprocess
+from pathlib import Path
+
+LYRIC_VIDEO=os.path.join(OUTPUT_ROOT,'stage2_lyrics.mp4')
+os.makedirs(WORK_ROOT,exist_ok=True)
+
+FONT_FILES=[]
+for root,ds,fs in os.walk(FONTS_ROOT):
+    FONT_FILES += [os.path.join(root,f) for f in fs if f.lower().endswith(('.ttf','.otf'))]
+if not FONT_FILES:
+    FONT_FILES=glob.glob('/usr/share/fonts/**/*.ttf',recursive=True)
+if not FONT_FILES:
+    raise RuntimeError('No font files found.')
+
+EMOJI_FILES=[]
+for root,ds,fs in os.walk(EMOJI_ROOT):
+    EMOJI_FILES += [os.path.join(root,f) for f in fs if f.lower().endswith(('.png','.webp'))]
+
+print(f'Fonts available: {len(FONT_FILES)}')
+print(f'Emoji assets available: {len(EMOJI_FILES)}')
+print('Lyric mode:',LYRIC_MODE)
+
+# ------------------------------------------------------------
+# EXACT EMOJI ASSET INDEX
+# ------------------------------------------------------------
+# Twemoji filenames are based on the complete Unicode sequence:
+#   💖      -> 1f496.png
+#   👍      -> 1f44d.png
+#   👍🏽    -> 1f44d-1f3fd.png
+#   🇮🇳     -> 1f1ee-1f1f3.png
+#   👩‍💻    -> 1f469-200d-1f4bb.png
+#   ❤️‍🔥   -> 2764-fe0f-200d-1f525.png
+#
+# Build exact basename index once. No file image is opened here.
+EMOJI_INDEX={}
+for p in EMOJI_FILES:
+    EMOJI_INDEX[Path(p).stem.lower()]=p
+
+def emoji_codepoints(s):
+    return '-'.join(f'{ord(c):x}' for c in s)
+
+def emoji_path(ch):
+    """Exact Unicode sequence -> exact Twemoji asset path."""
+    if not ch:
+        return None
+
+    cp=emoji_codepoints(ch)
+    p=EMOJI_INDEX.get(cp)
+    if p:
+        return p
+
+    # Safe fallback ONLY for variation-selector differences.
+    # Never use substring/prefix matching.
+    clean=''.join(c for c in ch if ord(c)!=0xfe0f)
+    if clean!=ch:
+        cp2=emoji_codepoints(clean)
+        p=EMOJI_INDEX.get(cp2)
+        if p:
+            return p
+
+    return None
+
+# ------------------------------------------------------------
+# EMOJI-AWARE PARSING
+# ------------------------------------------------------------
+# Handles:
+#   Jaan 💖
+#   Jaan💖
+#   👍🏽
+#   ❤️‍🔥
+#   👩‍💻
+#   🇮🇳
+# as complete emoji units.
+EMOJI_RE=re.compile(
+    r'['
+    r'\U0001F1E6-\U0001F1FF'
+    r'\U0001F300-\U0001FAFF'
+    r'\u2600-\u27BF'
+    r']'
+    r'(?:\uFE0F)?'
+    r'(?:[\U0001F3FB-\U0001F3FF])?'
+    r'(?:\u200D'
+    r'['
+    r'\U0001F300-\U0001FAFF'
+    r'\u2600-\u27BF'
+    r']'
+    r'(?:\uFE0F)?'
+    r'(?:[\U0001F3FB-\U0001F3FF])?'
+    r')*',
+    re.UNICODE
+)
+
+def extract_emojis(text):
+    return [(m.start(),m.end(),m.group()) for m in EMOJI_RE.finditer(text)]
+
+def strip_emojis(text):
+    return EMOJI_RE.sub('',text)
+
+def attach_emojis_to_words(line):
+    """
+    Return plain lyric words and emoji attached to each corresponding word.
+
+    Emoji always belongs to the nearest preceding lyric word.
+    Spaces are irrelevant, so both Jaan 💖 and Jaan💖 attach 💖 to Jaan.
+    """
+    text=str(line or '')
+    matches=extract_emojis(text)
+
+    # Remove emoji while keeping separator space so normal words survive.
+    cleaned=text
+    for s,e,ch in reversed(matches):
+        cleaned=cleaned[:s]+' '+cleaned[e:]
+
+    plain_words=re.findall(r'\S+',cleaned)
+    attachments=[None]*len(plain_words)
+
+    for s,e,ch in matches:
+        before=text[:s]
+        prev_words=re.findall(r'\S+',strip_emojis(before))
+        if not prev_words:
+            continue
+
+        target=prev_words[-1]
+
+        # Attach to the last matching occurrence so repeated words work safely.
+        for i in range(len(plain_words)-1,-1,-1):
+            if plain_words[i]==target:
+                if attachments[i]:
+                    attachments[i]+=ch
+                else:
+                    attachments[i]=ch
+                break
+
+    return plain_words,attachments
+
+
+def choose_font(size):
+    # Preserve existing randomized font behavior.
+    random.shuffle(FONT_FILES)
+    for f in FONT_FILES[:20]:
+        try:
+            return ImageFont.truetype(f,size)
+        except:
+            pass
+    return ImageFont.truetype(FONT_FILES[0],size)
+
+# ------------------------------------------------------------
+# BUILD EVENTS — EXISTING TIMINGS PRESERVED
+# ------------------------------------------------------------
+MAP_START=float(LINES[0]['start'])
+word_events=[]
+
+for li in LINES[:len(TIMELINE)]:
+    timed_words=[
+        w for w in li.get('words',[])
+        if str(w.get('word','')).strip()
+    ]
+
+    plain_words,attachments=attach_emojis_to_words(
+        str(li.get('line',''))
+    )
+
+    # Normal path: Stage 1 word list and lyric text contain the same words.
+    if len(plain_words)==len(timed_words):
+        for pos,w in enumerate(timed_words):
+            raw=str(w.get('word','')).strip()
+            if not raw:
+                continue
+
+            ws=float(w['start'])-MAP_START
+            we=float(w['end'])-MAP_START
+
+            ev={
+                'start':max(0.0,ws),
+                'end':max(ws,we),
+                'text':raw
+            }
+
+            if attachments[pos]:
+                ev['emoji']=attachments[pos]
+
+            word_events.append(ev)
+
+    else:
+        # Conservative fallback: NEVER invent or modify Stage 1 timing.
+        # Only attach an emoji when the corresponding timed-word position exists.
+        local_events=[]
+        for w in timed_words:
+            raw=str(w.get('word','')).strip()
+            if not raw:
+                continue
+
+            ws=float(w['start'])-MAP_START
+            we=float(w['end'])-MAP_START
+
+            ev={
+                'start':max(0.0,ws),
+                'end':max(ws,we),
+                'text':raw
+            }
+            local_events.append(ev)
+            word_events.append(ev)
+
+        for pos,emo in enumerate(attachments):
+            if not emo or pos>=len(timed_words):
+                continue
+
+            target=str(timed_words[pos].get('word','')).strip()
+            tstart=float(timed_words[pos]['start'])-MAP_START
+
+            for ev in local_events:
+                if ev['text']==target and abs(ev['start']-tstart)<0.02:
+                    ev['emoji']=emo
+                    break
+
+styles={}
+PALETTE=[
+    (255,255,255),
+    (255,80,180),
+    (0,235,255),
+    (255,225,70),
+    (170,100,255),
+    (90,255,130),
+    (255,145,60)
+]
+
+for ev in word_events:
+    styles[(round(ev['start'],3),ev['text'])]={
+        'size':random.choice([76,86,96,108,120]),
+        'fill':random.choice(PALETTE),
+        'stroke':random.choice([(0,0,0),(255,255,255),(40,20,60)]),
+        'sw':random.choice([2,3,4]),
+        'x':random.randint(250,830),
+        'y':random.choice([330,620,900,1180,1450]),
+        'font':choose_font(random.choice([76,86,96,108,120]))
+    }
+
+def draw_event(frame,ev,progress):
+    st=styles[(round(ev['start'],3),ev['text'])]
+    text=ev['text']
+    emoji=ev.get('emoji','')
+
+    reveal=max(
+        1,
+        min(
+            len(text),
+            int(math.ceil(len(text)*min(1,progress/.12)))
+        )
+    ) if text else 0
+
+    shown=text[:reveal]
+    layer=Image.new('RGBA',frame.size,(0,0,0,0))
+    d=ImageDraw.Draw(layer)
+    font=st['font']
+
+    bbox=d.textbbox(
+        (0,0),
+        shown,
+        font=font,
+        stroke_width=st['sw']
+    )
+    tw=bbox[2]-bbox[0]
+
+    x=max(20,min(OUTPUT_W-tw-20,st['x']))
+    y=st['y']
+
+    d.text(
+        (x+3,y+3),
+        shown,
+        font=font,
+        fill=(0,0,0,130),
+        stroke_width=st['sw']+1,
+        stroke_fill=(0,0,0,100)
+    )
+    d.text(
+        (x,y),
+        shown,
+        font=font,
+        fill=st['fill'],
+        stroke_width=st['sw'],
+        stroke_fill=st['stroke']
+    )
+
+    if emoji:
+        # Multiple attached emoji are rendered left-to-right together.
+        ep=emoji_path(emoji)
+        if ep:
+            try:
+                with Image.open(ep) as ei:
+                    ei=ei.convert('RGBA')
+                    target=max(42,int(font.size*.78))
+                    ei.thumbnail(
+                        (target,target),
+                        Image.Resampling.LANCZOS
+                    )
+                    ex=min(
+                        OUTPUT_W-ei.width-15,
+                        x+tw+10
+                    )
+                    ey=y+max(
+                        0,
+                        (font.size-ei.height)//2
+                    )
+                    layer.alpha_composite(ei,(ex,ey))
+            except Exception:
+                pass
+
+    return Image.alpha_composite(frame.convert('RGBA'),layer)
+
+# ------------------------------------------------------------
+# ORIGINAL FFMPEG PIPELINE — UNCHANGED
+# ------------------------------------------------------------
+reader=subprocess.Popen(
+    [
+        'ffmpeg','-v','error','-i',BASE_VIDEO,
+        '-f','rawvideo','-pix_fmt','rgb24',
+        '-r',str(FPS),'pipe:1'
+    ],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE
+)
+
+writer=subprocess.Popen(
+    [
+        'ffmpeg','-y',
+        '-f','rawvideo',
+        '-pix_fmt','rgb24',
+        '-s',f'{OUTPUT_W}x{OUTPUT_H}',
+        '-r',str(FPS),
+        '-i','pipe:0',
+        '-i',AUDIO_PATH,
+        '-map','0:v:0',
+        '-map','1:a:0',
+        '-c:v','libx264',
+        '-preset','veryfast',
+        '-crf','20',
+        '-pix_fmt','yuv420p',
+        '-c:a','aac',
+        '-b:a','192k',
+        '-t',str(AUDIO_DURATION),
+        LYRIC_VIDEO
+    ],
+    stdin=subprocess.PIPE,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.PIPE
+)
+
+fb=OUTPUT_W*OUTPUT_H*3
+idx=0
+
+try:
+    while True:
+        raw=reader.stdout.read(fb)
+        if len(raw)<fb:
+            break
+
+        t=idx/FPS
+        frame=Image.frombytes('RGB',(OUTPUT_W,OUTPUT_H),raw)
+
+        active=[
+            e for e in word_events
+            if e['start']<=t<e['end']
+        ]
+
+        for ev in active:
+            frame=draw_event(
+                frame,
+                ev,
+                (t-ev['start'])/max(.001,ev['end']-ev['start'])
+            )
+
+        writer.stdin.write(
+            frame.convert('RGB').tobytes()
+        )
+        idx+=1
+
+    reader.stdout.close()
+    reader.wait()
+    writer.stdin.close()
+    err=writer.stderr.read().decode(errors='ignore')
+    rc=writer.wait()
+
+    if rc:
+        raise RuntimeError(
+            'Lyric render failed:\n'+err[-3000:]
+        )
+finally:
+    try:
+        reader.kill()
+    except:
+        pass
+    try:
+        writer.stdin.close()
+    except:
+        pass
+
+print('✅ Lyric video saved:',LYRIC_VIDEO)
+print('Mode:',LYRIC_MODE)
+print('Events rendered:',len(word_events))
+print('No per-frame/per-word PNG files created.')
