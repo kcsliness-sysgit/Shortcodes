@@ -397,7 +397,7 @@
     </div>
 
     <div style="margin-top: 90px; display: flex; justify-content: space-between; align-items: flex-end;">
-      <p style="font-size: 0.8rem; color: #555;">Consultation Fee Paid: ₹<span id="print-fee"></span></p>
+      <p style="font-size: 0.8rem; color: #555;">Total Fees: ₹<span id="print-fee"></span></p>
       <div style="text-align: right;">
         <p>___________________________________</p>
         <p style="font-weight: bold; margin-top: 4px;">Dr. A. Sharma</p>
@@ -564,7 +564,8 @@
       if (!activePatient) return;
 
       document.getElementById('profile-name').innerText = activePatient.name;
-      document.getElementById('profile-details').innerText = `ID: ${activePatient.id} | Gender: ${activePatient.gender} | Mob: ${activePatient.mobile}`;
+      const patientMeta = [activePatient.bloodGroup ? 'Blood Group: ' + activePatient.bloodGroup : '', activePatient.location ? 'Location: ' + activePatient.location : '', activePatient.city ? 'City: ' + activePatient.city : ''].filter(Boolean).join(' | ');
+      document.getElementById('profile-details').innerText = `ID: ${activePatient.id} | Gender: ${activePatient.gender} | Mob: ${activePatient.mobile}${patientMeta ? ' | ' + patientMeta : ''}`;
 
       let lifetimeSpent = activePatient.visits.reduce((sum, v) => sum + Number(v.fee || 0), 0);
       document.getElementById('profile-lifetime-spent').innerText = `Lifetime Total Paid: ₹${lifetimeSpent}`;
