@@ -496,7 +496,7 @@
         <button class="btn btn-secondary" onclick="addRxRow()" style="margin-top: 10px; font-size: 0.85rem;">+ Add Medicine</button>
 
         <div class="section-panel"><label>Doctor's Special Notes / Advice for Patient</label><textarea id="visit-doctors-notes" rows="2" placeholder="e.g. Drink plenty of warm water, review after 3 days."></textarea><button type="button" class="btn btn-secondary" style="margin-top:8px;" onclick="addDynamicField('extra-notes-fields','note')">+ Add Another Note</button><div id="extra-notes-fields"></div></div>
-        <div class="section-panel"><h4>Fees</h4><div class="form-grid"><div class="form-group"><label>Consultation Fee (₹)</label><input type="number" id="visit-fee" min="0" value="300" oninput="calculateTotalFees()"></div></div><button type="button" class="btn btn-secondary" style="margin-top:8px;" onclick="addDynamicField('extra-fees-fields','fee')">+ Add Another Fee</button><div id="extra-fees-fields"></div><p style="margin-top:12px;font-weight:700;">Total Fees: ₹<span id="visit-total-fees">300</span></p></div>
+        <div class="section-panel"><h4>Fees</h4><div class="form-grid"><div class="form-group"><label>Consultation Type</label><select id="visit-fee-type" onchange="applyConsultationPreset()"><option value="new">New Consultation Fee</option><option value="followup">Follow up</option></select></div><div class="form-group"><label>Fee Title (Editable)</label><input type="text" id="visit-fee-title" value="New Consultation Fee" placeholder="Enter fee title"></div><div class="form-group"><label>Consultation Fee (₹) — Editable</label><input type="number" id="visit-fee" min="0" value="300" oninput="calculateTotalFees()"></div></div><button type="button" class="btn btn-secondary" style="margin-top:8px;" onclick="addDynamicField('extra-fees-fields','fee')">+ Add Another Fee</button><div id="extra-fees-fields"></div><p style="margin-top:12px;font-weight:700;">Total Fees: ₹<span id="visit-total-fees">300</span></p></div>
         <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap:wrap;">
           <button class="btn btn-success" onclick="saveVisitAndPrint()">💾 Save Visit & Print Prescription</button>
           <button class="btn btn-secondary" onclick="closeVisitForm()">Cancel</button>
@@ -859,6 +859,13 @@
       openEditVisitForm(visitIndex);
     }
 
+    function applyConsultationPreset() {
+      const type = document.getElementById('visit-fee-type').value;
+      document.getElementById('visit-fee-title').value = type === 'followup' ? 'Follow up' : 'New Consultation Fee';
+      document.getElementById('visit-fee').value = type === 'followup' ? '200' : '300';
+      calculateTotalFees();
+    }
+
     // --- OPD VISIT & SPLIT VITALS ---
     function openNewVisitForm() {
       if (!activePatient) return;
@@ -889,7 +896,7 @@
       document.getElementById('visit-age').value = "";
       document.getElementById('visit-symptoms').value = "";
       document.getElementById('visit-history').value = ""; document.getElementById('visit-onset').value = ""; document.getElementById('visit-onset-duration').value = ""; document.getElementById('visit-onset-pattern').value = "";
-      document.getElementById('vitals-extra-fields').innerHTML = ""; document.getElementById('extra-notes-fields').innerHTML = ""; document.getElementById('extra-fees-fields').innerHTML = ""; document.getElementById('visit-total-fees').innerText = "300";
+      document.getElementById('vitals-extra-fields').innerHTML = ""; document.getElementById('extra-notes-fields').innerHTML = ""; document.getElementById('extra-fees-fields').innerHTML = ""; document.getElementById('visit-fee-type').value = "new"; document.getElementById('visit-fee-title').value = "New Consultation Fee"; document.getElementById('visit-total-fees').innerText = "300";
       document.getElementById('vital-weight').value = "";
       document.getElementById('vital-bp').value = "";
       document.getElementById('vital-pulse').value = "";
@@ -915,6 +922,8 @@
       document.getElementById('visit-age').value = visit.age ?? activePatient.age ?? "";
       document.getElementById('visit-symptoms').value = visit.symptoms;
       document.getElementById('visit-fee').value = visit.consultationFee ?? visit.fee ?? 300;
+      document.getElementById('visit-fee-title').value = visit.consultationFeeTitle || 'New Consultation Fee';
+      document.getElementById('visit-fee-type').value = /follow\s*up/i.test(document.getElementById('visit-fee-title').value) ? 'followup' : 'new';
       document.getElementById('visit-doctors-notes').value = visit.notes || "";
       document.getElementById('visit-history').value = visit.history || ""; document.getElementById('visit-onset').value = visit.onset || ""; document.getElementById('visit-onset-duration').value = visit.onsetDuration || ""; document.getElementById('visit-onset-pattern').value = visit.onsetPattern || "";
       document.getElementById('vitals-extra-fields').innerHTML = ""; document.getElementById('extra-notes-fields').innerHTML = ""; document.getElementById('extra-fees-fields').innerHTML = "";
