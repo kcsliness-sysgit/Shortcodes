@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>City Health Clinic - Professional OPD System</title>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --secondary: #0f172a;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #334155;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 40px; }
+
+    #auth-wrapper {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000;
+    }
+    .login-card {
+      background: var(--surface); padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
+    }
+    .login-card h2 { margin-bottom: 20px; color: var(--secondary); }
+
+    header { background: var(--secondary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .nav-tabs { display: flex; gap: 8px; background: #1e293b; padding: 6px; border-radius: 8px; margin-top: 15px; overflow-x: auto; }
+    .tab-btn { background: transparent; color: #94a3b8; border: none; padding: 10px 16px; font-weight: 600; cursor: pointer; border-radius: 6px; transition: 0.2s; white-space: nowrap; }
+    .tab-btn.active { background: var(--primary); color: white; }
+
+    .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+    .card { background: var(--surface); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid var(--border); }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 15px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: 0.85rem; font-weight: 600; color: #475569; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+
+    .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn:hover { background: var(--primary-dark); }
+    .btn-secondary { background: #64748b; }
+    .btn-success { background: var(--success); }
+    .btn-danger { background: var(--danger); }
+    .btn-warning { background: var(--warning); color: white; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #f1f5f9; color: #475569; font-size: 0.85rem; }
+
+    .timeline { border-left: 2px solid var(--primary); padding-left: 15px; margin-top: 15px; }
+    .timeline-item { position: relative; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+    .timeline-item::before { content: ''; position: absolute; left: -21px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+
+    .hidden { display: none !important; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printable-prescription, #printable-prescription * { visibility: visible; }
+      #printable-prescription { position: absolute; left: 0; top: 0; width: 100%; padding: 25px; background: white; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN WRAPPER -->
+  <div id="auth-wrapper">
+    <div class="login-card">
+      <h2>🔐 Doctor Admin Portal</h2>
+      <input type="password" id="admin-password-input" placeholder="Enter Admin Password" style="width:100%; margin-bottom: 15px;">
+      <button class="btn" style="width:100%;" onclick="verifyLogin()">Login to Clinic</button>
+      <p id="login-error" style="color:var(--danger); font-size:0.85rem; margin-top:10px; display:none;">Incorrect Password! (Default: doctor123)</p>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="app-container" class="hidden">
+    <header class="no-print">
+      <div>
+        <h2>🩺 City Health Clinic & OPD</h2>
+        <p style="font-size: 0.8rem; color: #94a3b8;">Dr. A. Sharma | Advanced Clinical Dashboard</p>
+      </div>
+      <button class="btn btn-secondary" onclick="logout()">Secure Logout</button>
+    </header>
+
+    <div class="container no-print">
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('revisit-tab')">🔄 Patient Search & Re-visit</button>
+        <button class="tab-btn" onclick="switchTab('new-patient-tab')">➕ New Patient Registration</button>
+        <button class="tab-btn" onclick="switchTab('all-patients-tab')">📋 All Patients Directory</button>
+        <button class="tab-btn" onclick="switchTab('all-visits-tab')">🏥 All OPD Visits Log</button>
+        <button class="tab-btn" onclick="switchTab('medicines-tab')">💊 Medicine Inventory</button>
+        <button class="tab-btn" onclick="switchTab('reports-tab')">📊 Earnings Reports</button>
+      </div>
+
+      <!-- TAB 1: RE-VISIT & SEARCH -->
+      <div id="revisit-tab" class="tab-content card" style="margin-top: 15px;">
+        <h3>🔍 Search Patient (By Mobile Number, Patient ID, or Name)</h3>
+        <div style="display: flex; gap: 10px; max-width: 500px; margin-top: 10px;">
+          <input type="text" id="search-input" placeholder="Search Mobile, ID or Name...">
+          <button class="btn" onclick="searchPatient()">Search</button>
+        </div>
+
+        <div id="family-results-card" class="hidden" style="margin-top: 20px;">
+          <h4>👥 Matching Patient Profiles</h4>
+          <div id="family-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;"></div>
+        </div>
+
+        <div id="active-patient-profile" class="hidden" style="margin-top: 25px; border-top: 2px solid var(--border); padding-top: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #e0f2fe; padding: 15px; border-radius: 8px;">
+            <div>
+              <h3 id="profile-name" style="color: var(--primary-dark);">Ramesh Kumar</h3>
+              <p style="font-size: 0.85rem;" id="profile-details">ID: P-310-00 | Age: 34 | Gender: Male | Mob: 9876543310</p>
+              <p style="font-size: 0.85rem; font-weight: bold; color: var(--success);" id="profile-lifetime-spent">Lifetime Total Paid: ₹0</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-warning" onclick="openEditPatientModal()">✏️ Edit Patient</button>
+              <button class="btn btn-success" onclick="openNewVisitForm()">+ Add New Visit</button>
+            </div>
+          </div>
+
+          <h4 style="margin-top: 20px;">📜 Visit History Timeline</h4>
+          <div class="timeline" id="history-timeline"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: NEW PATIENT REGISTRATION -->
+      <div id="new-patient-tab" class="tab-content card hidden" style="margin-top: 15px;">
+        <h3>➕ Register New Patient Profile</h3>
+        <form id="new-patient-form" onsubmit="registerNewPatient(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Mobile Number (Key for ID Generation) *</label>
+              <input type="tel" id="new-pat-mob" required placeholder="10 Digit Mobile No" oninput="previewAutoID()">
+            </div>
+            <div class="form-group">
+              <label>Auto-Generated Patient ID *</label>
+              <input type="text" id="new-pat-id" readonly style="background: #f1f5f9; font-weight: bold; color: var(--primary);">
+            </div>
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="new-pat-name" required placeholder="Patient Name">
+            </div>
+            <div class="form-group">
+              <label>Age *</label>
+              <input type="number" id="new-pat-age" required placeholder="Age">
+            </div>
+            <div class="form-group">
+              <label>Gender *</label>
+              <select id="new-pat-gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success" style="margin-top: 15px;">Save Profile & Proceed to Visit</button>
+        </form>
+      </div>
+
+      <!-- TAB 3: ALL PATIENTS DIRECTORY -->
+      <div id="all-patients-tab" class="tab-content card hidden" style="margin-top: 15px;">
+        <h3>📋 Registered Patients Directory</h3>
+        <table>
+          <thead>
+            <tr><th>Patient ID</th><th>Name</th><th>Mobile</th><th>Age/Gender</th><th>Total Visits</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="all-patients-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- TAB 4: ALL OPD VISITS LOG -->
+      <div id="all-visits-tab" class="tab-content card hidden" style="margin-top: 15px;">
+        <h3>🏥 All OPD Visits History Log</h3>
+        <table>
+          <thead>
+            <tr><th>Token ID</th><th>Date</th><th>Patient Name</th><th>Mobile</th><th>Symptoms</th><th>Fee (₹)</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="all-visits-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- TAB 5: MEDICINES & BACKUP -->
+      <div id="medicines-tab" class="tab-content card hidden" style="margin-top: 15px;">
+        <h3>💊 Medicine Master Inventory & Backup Management</h3>
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+          <button class="btn" onclick="exportBackupData()">💾 Export Full Backup (JSON)</button>
+          <label class="btn btn-secondary" style="cursor: pointer; margin: 0;">
+            📂 Import Backup <input type="file" id="import-file" style="display: none;" onchange="importBackupData(event)">
+          </label>
+        </div>
+        <h4>Add New Medicine to Master Database</h4>
+        <div class="form-grid" style="align-items: flex-end;">
+          <div class="form-group">
+            <label>Medicine Name & Strength</label>
+            <input type="text" id="new-med-name" placeholder="e.g. Tab Pantocid 40mg">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" id="new-med-cat" placeholder="e.g. Tablet / Syrup">
+          </div>
+          <button class="btn btn-success" onclick="addNewMedicineMaster()">Add to Master</button>
+        </div>
+        <h4 style="margin-top: 25px;">Master Medicines List</h4>
+        <table style="margin-top: 10px;">
+          <thead><tr><th>Medicine Name</th><th>Category</th></tr></thead>
+          <tbody id="med-inventory-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- TAB 6: REPORTS -->
+      <div id="reports-tab" class="tab-content card hidden" style="margin-top: 15px;">
+        <h3>📊 Financial Trajectory & Earning Reports</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #f1f5f9; padding: 20px; border-radius: 8px;">
+            <p style="font-size: 0.85rem; color: #64748b;">Total Lifetime Collection</p>
+            <h2 id="report-total-earnings" style="color: var(--success); margin-top: 5px;">₹0</h2>
+          </div>
+          <div style="background: #f1f5f9; padding: 20px; border-radius: 8px;">
+            <p style="font-size: 0.85rem; color: #64748b;">Total Patients Registered</p>
+            <h2 id="report-total-patients" style="color: var(--primary); margin-top: 5px;">0</h2>
+          </div>
+          <div style="background: #f1f5f9; padding: 20px; border-radius: 8px;">
+            <p style="font-size: 0.85rem; color: #64748b;">Total OPD Visits Attended</p>
+            <h2 id="report-total-visits" style="color: #0f172a; margin-top: 5px;">0</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT PATIENT MODAL FORM -->
+      <div id="edit-patient-card" class="card hidden" style="border: 2px solid var(--warning); margin-top: 20px;">
+        <h3 style="color: var(--warning);">✏️ Edit Patient Profile</h3>
+        <form id="edit-patient-form" onsubmit="saveEditedPatient(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Patient ID (Fixed)</label>
+              <input type="text" id="edit-pat-id" readonly style="background: #f1f5f9;">
+            </div>
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="edit-pat-name" required>
+            </div>
+            <div class="form-group">
+              <label>Mobile Number *</label>
+              <input type="tel" id="edit-pat-mob" required>
+            </div>
+            <div class="form-group">
+              <label>Age *</label>
+              <input type="number" id="edit-pat-age" required>
+            </div>
+            <div class="form-group">
+              <label>Gender *</label>
+              <select id="edit-pat-gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button type="submit" class="btn btn-warning">Update Patient Details</button>
+            <button type="button" class="btn btn-secondary" onclick="closeEditPatientModal()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- NEW / EDIT OPD VISIT MODAL FORM -->
+      <div id="add-visit-card" class="card hidden" style="border: 2px solid var(--primary); margin-top: 20px;">
+        <h3 id="visit-form-title" style="color: var(--primary-dark);">💊 New OPD Visit & Prescription Entry</h3>
+        <input type="hidden" id="edit-visit-index" value="-1">
+        
+        <div style="background: #e0f2fe; padding: 10px 15px; border-radius: 6px; margin: 15px 0; font-size: 0.9rem;">
+          <strong>Patient:</strong> <span id="visit-modal-pat-name"></span> | 
+          <strong>ID:</strong> <span id="visit-modal-pat-id"></span> | 
+          <strong>Mobile:</strong> <span id="visit-modal-pat-mob"></span>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Daily Clinic OPD Token ID</label>
+            <input type="text" id="visit-token-id" readonly style="background: #f1f5f9; font-weight: bold; color: var(--danger);">
+          </div>
+          <div class="form-group">
+            <label>Visit Date</label>
+            <input type="date" id="visit-date">
+          </div>
+          <div class="form-group">
+            <label>Chief Complaints / Symptoms</label>
+            <input type="text" id="visit-symptoms" placeholder="e.g. Fever, Cough">
+          </div>
+          <div class="form-group">
+            <label>Vitals (BP, Temp, Weight)</label>
+            <input type="text" id="visit-vitals" placeholder="e.g. 120/80 mmHg, 99°F">
+          </div>
+          <div class="form-group">
+            <label>Consultation & Treatment Fee (₹)</label>
+            <input type="number" id="visit-fee" value="300">
+          </div>
+        </div>
+
+        <h4 style="margin-top: 20px;">Prescription Builder</h4>
+        <div id="rx-builder-rows" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;"></div>
+        <button class="btn btn-secondary" onclick="addRxRow()" style="margin-top: 10px; font-size: 0.85rem;">+ Add Medicine</button>
+
+        <div class="form-group" style="margin-top: 15px;">
+          <label>Doctor's Special Notes / Advice for Patient</label>
+          <textarea id="visit-doctors-notes" rows="2" placeholder="e.g. Drink plenty of warm water, review after 3 days."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="btn btn-success" onclick="saveVisitAndPrint()">💾 Save Visit & Print Prescription</button>
+          <button class="btn btn-secondary" onclick="closeVisitForm()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="medicines-datalist"></datalist>
+
+  <!-- PRINTABLE LETTERHEAD -->
+  <div id="printable-prescription" class="hidden">
+    <div style="border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <h2>DR. A. SHARMA (M.B.B.S, M.D)</h2>
+        <p style="font-size: 0.85rem;">Senior Consultant Physician & Diabetologist</p>
+        <p style="font-size: 0.85rem;">Reg No: MCI-567890 | City Health Clinic, Main Road</p>
+      </div>
+      <div style="text-align: right; font-size: 0.9rem;">
+        <p><strong>Date:</strong> <span id="print-date"></span></p>
+        <p><strong>OPD Token:</strong> <span id="print-token"></span></p>
+        <p><strong>Patient ID:</strong> <span id="print-pat-id"></span></p>
+      </div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 0.95rem; display: flex; justify-content: space-between;">
+      <div><strong>Patient Name:</strong> <span id="print-name"></span></div>
+      <div><strong>Age/Gender:</strong> <span id="print-age-gender"></span></div>
+      <div><strong>Mobile:</strong> <span id="print-mob"></span></div>
+    </div>
+
+    <div style="font-size: 0.95rem; margin-bottom: 15px;">
+      <strong>Chief Complaints:</strong> <span id="print-symptoms"></span> &nbsp;|&nbsp; 
+      <strong>Vitals:</strong> <span id="print-vitals"></span>
+    </div>
+
+    <hr style="border: 0.5px solid #000; margin: 15px 0;">
+
+    <h3 style="margin-bottom: 10px;">Rx (Prescription)</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+      <thead>
+        <tr>
+          <th style="border-bottom: 1px solid #000; text-align: left; padding: 6px;">Medicine Name</th>
+          <th style="border-bottom: 1px solid #000; text-align: left; padding: 6px;">Dosage</th>
+          <th style="border-bottom: 1px solid #000; text-align: left; padding: 6px;">Timing</th>
+          <th style="border-bottom: 1px solid #000; text-align: left; padding: 6px;">Duration</th>
+        </tr>
+      </thead>
+      <tbody id="print-rx-tbody"></tbody>
+    </table>
+
+    <div id="print-notes-section" style="margin-top: 20px; font-size: 0.9rem; background: #fdfdfd; border-left: 3px solid #0284c7; padding: 8px;">
+      <strong>Doctor's Advice:</strong> <span id="print-notes"></span>
+    </div>
+
+    <div style="margin-top: 90px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <p style="font-size: 0.8rem; color: #555;">Consultation Fee Paid: ₹<span id="print-fee"></span></p>
+      <div style="text-align: right;">
+        <p>___________________________________</p>
+        <p style="font-weight: bold; margin-top: 4px;">Dr. A. Sharma</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_PASS = "doctor123";
+
+    let clinicData = JSON.parse(localStorage.getItem('clinic_master_data')) || {
+      patients: [
+        {
+          id: "P-310-00",
+          name: "Ramesh Kumar",
+          mobile: "9876543310",
+          age: 34,
+          gender: "Male",
+          visits: [
+            { token: "O-26102301", date: "2026-10-23", symptoms: "Fever & Cold", vitals: "120/80, 99°F", fee: 300, notes: "Take rest", rx: [{med: "Tab Paracetamol 500mg", dose: "1-0-1", timing: "After Food", duration: "3 Days"}] }
+          ]
+        }
+      ],
+      medicines: [
+        { name: "Tab Paracetamol 500mg", category: "Tablet" },
+        { name: "Tab Pantocid 40mg", category: "Tablet" },
+        { name: "Syrup Benadryl 100ml", category: "Syrup" },
+        { name: "Cap Amoxicillin 500mg", category: "Capsule" }
+      ]
+    };
+
+    let activePatient = null;
+
+    window.onload = function() {
+      if (sessionStorage.getItem('clinic_logged_in') === 'true') {
+        document.getElementById('auth-wrapper').classList.add('hidden');
+        document.getElementById('app-container').classList.remove('hidden');
+        initApp();
+      }
+    };
+
+    function saveToStorage() {
+      localStorage.setItem('clinic_master_data', JSON.stringify(clinicData));
+      updateReports();
+      populateMedicineDatalist();
+    }
+
+    function verifyLogin() {
+      const pass = document.getElementById('admin-password-input').value;
+      if (pass === ADMIN_PASS) {
+        sessionStorage.setItem('clinic_logged_in', 'true');
+        document.getElementById('auth-wrapper').classList.add('hidden');
+        document.getElementById('app-container').classList.remove('hidden');
+        initApp();
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('clinic_logged_in');
+      document.getElementById('app-container').classList.add('hidden');
+      document.getElementById('auth-wrapper').classList.remove('hidden');
+      document.getElementById('admin-password-input').value = "";
+    }
+
+    function initApp() {
+      populateMedicineDatalist();
+      renderMedicineInventory();
+      updateReports();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.remove('hidden');
+      event.target.classList.add('active');
+
+      if (tabId === 'all-patients-tab') {
+        renderAllPatientsDirectory();
+      } else if (tabId === 'all-visits-tab') {
+        renderAllVisitsDirectory();
+      }
+    }
+
+    function previewAutoID() {
+      const mob = document.getElementById('new-pat-mob').value.trim();
+      if (mob.length < 3) {
+        document.getElementById('new-pat-id').value = "";
+        return;
+      }
+      const last3 = mob.slice(-3);
+      const existing = clinicData.patients.filter(p => p.mobile.slice(-3) === last3);
+      const counter = String(existing.length).padStart(2, '0');
+      document.getElementById('new-pat-id').value = `P-${last3}-${counter}`;
+    }
+
+    // --- SEARCH LOGIC ---
+    function searchPatient() {
+      const query = document.getElementById('search-input').value.trim().toLowerCase();
+      if (!query) return alert("Kripya Mobile No, ID ya Name daalein.");
+
+      const matches = clinicData.patients.filter(p => 
+        p.mobile.includes(query) || 
+        p.id.toLowerCase().includes(query) || 
+        p.name.toLowerCase().includes(query)
+      );
+
+      if (matches.length === 0) {
+        alert("Koi patient nahi mila! New Patient Registration tab me register karein.");
+        document.getElementById('family-results-card').classList.add('hidden');
+        document.getElementById('active-patient-profile').classList.add('hidden');
+        return;
+      }
+
+      const container = document.getElementById('family-list-container');
+      container.innerHTML = "";
+
+      matches.forEach(pat => {
+        container.innerHTML += `
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 12px; border-radius: 6px;">
+            <div>
+              <strong>${pat.name}</strong> (${pat.gender}, ${pat.age} yrs) | ID: <code>${pat.id}</code> | Mob: ${pat.mobile}
+            </div>
+            <button class="btn" style="padding: 6px 12px; font-size: 0.85rem;" onclick="selectPatient('${pat.id}')">Select Profile</button>
+          </div>
+        `;
+      });
+
+      document.getElementById('family-results-card').classList.remove('hidden');
+      document.getElementById('active-patient-profile').classList.add('hidden');
+    }
+
+    function selectPatient(patId) {
+      activePatient = clinicData.patients.find(p => p.id === patId);
+      if (!activePatient) return;
+
+      document.getElementById('profile-name').innerText = activePatient.name;
+      document.getElementById('profile-details').innerText = `ID: ${activePatient.id} | Age: ${activePatient.age} | Gender: ${activePatient.gender} | Mob: ${activePatient.mobile}`;
+
+      let lifetimeSpent = activePatient.visits.reduce((sum, v) => sum + Number(v.fee || 0), 0);
+      document.getElementById('profile-lifetime-spent').innerText = `Lifetime Total Paid: ₹${lifetimeSpent}`;
+
+      renderTimeline();
+      document.getElementById('active-patient-profile').classList.remove('hidden');
+      document.getElementById('edit-patient-card').classList.add('hidden');
+    }
+
+    // --- EDIT & DELETE PATIENT ---
+    function openEditPatientModal() {
+      if (!activePatient) return;
+      document.getElementById('edit-pat-id').value = activePatient.id;
+      document.getElementById('edit-pat-name').value = activePatient.name;
+      document.getElementById('edit-pat-mob').value = activePatient.mobile;
+      document.getElementById('edit-pat-age').value = activePatient.age;
+      document.getElementById('edit-pat-gender').value = activePatient.gender;
+      document.getElementById('edit-patient-card').classList.remove('hidden');
+    }
+
+    function closeEditPatientModal() {
+      document.getElementById('edit-patient-card').classList.add('hidden');
+    }
+
+    function saveEditedPatient(e) {
+      e.preventDefault();
+      activePatient.name = document.getElementById('edit-pat-name').value.trim();
+      activePatient.mobile = document.getElementById('edit-pat-mob').value.trim();
+      activePatient.age = document.getElementById('edit-pat-age').value;
+      activePatient.gender = document.getElementById('edit-pat-gender').value;
+
+      saveToStorage();
+      selectPatient(activePatient.id);
+      alert("Patient profile updated successfully!");
+    }
+
+    function deletePatient(patId) {
+      if (confirm("Kya aap waqai is patient aur iska saara history delete karna chahte hain?")) {
+        clinicData.patients = clinicData.patients.filter(p => p.id !== patId);
+        saveToStorage();
+        alert("Patient deleted.");
+        document.getElementById('active-patient-profile').classList.add('hidden');
+        document.getElementById('family-results-card').classList.add('hidden');
+        if(!document.getElementById('all-patients-tab').classList.contains('hidden')) {
+          renderAllPatientsDirectory();
+        }
+      }
+    }
+
+    function registerNewPatient(e) {
+      e.preventDefault();
+      const mob = document.getElementById('new-pat-mob').value.trim();
+      const id = document.getElementById('new-pat-id').value.trim();
+      
+      const newPat = {
+        id: id,
+        name: document.getElementById('new-pat-name').value.trim(),
+        mobile: mob,
+        age: document.getElementById('new-pat-age').value,
+        gender: document.getElementById('new-pat-gender').value,
+        visits: []
+      };
+
+      clinicData.patients.push(newPat);
+      saveToStorage();
+      alert("New Patient Profile Registered Successfully!");
+
+      document.getElementById('new-patient-form').reset();
+      document.getElementById('new-pat-id').value = "";
+
+      switchTab('revisit-tab');
+      document.getElementById('search-input').value = newPat.mobile;
+      searchPatient();
+      selectPatient(newPat.id);
+      openNewVisitForm();
+    }
+
+    function renderAllPatientsDirectory() {
+      const tbody = document.getElementById('all-patients-tbody');
+      tbody.innerHTML = "";
+      clinicData.patients.forEach(p => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${p.id}</strong></td>
+            <td>${p.name}</td>
+            <td>${p.mobile}</td>
+            <td>${p.age} yrs / ${p.gender}</td>
+            <td>${p.visits.length} Visits</td>
+            <td>
+              <button class="btn" style="padding:4px 8px; font-size:0.8rem;" onclick="loadPatientAndSwitch('${p.id}')">View</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deletePatient('${p.id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderAllVisitsDirectory() {
+      const tbody = document.getElementById('all-visits-tbody');
+      tbody.innerHTML = "";
+      clinicData.patients.forEach(p => {
+        p.visits.forEach((v, vIndex) => {
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>${v.token}</strong></td>
+              <td>${v.date}</td>
+              <td>${p.name}</td>
+              <td>${p.mobile}</td>
+              <td>${v.symptoms}</td>
+              <td>₹${v.fee}</td>
+              <td>
+                <button class="btn" style="padding:4px 8px; font-size:0.8rem;" onclick="loadPatientAndEditVisit('${p.id}', ${vIndex})">Edit / View</button>
+                <button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteVisit('${p.id}', ${vIndex})">Delete</button>
+              </td>
+            </tr>
+          `;
+        });
+      });
+    }
+
+    function loadPatientAndSwitch(id) {
+      switchTab('revisit-tab');
+      document.getElementById('search-input').value = id;
+      searchPatient();
+      selectPatient(id);
+    }
+
+    function loadPatientAndEditVisit(patId, visitIndex) {
+      loadPatientAndSwitch(patId);
+      openEditVisitForm(visitIndex);
+    }
+
+    // --- OPD VISIT & EDIT/DELETE VISIT LOGIC ---
+    function openNewVisitForm() {
+      if (!activePatient) return;
+      document.getElementById('visit-form-title').innerText = "💊 New OPD Visit & Prescription Entry";
+      document.getElementById('edit-visit-index').value = "-1";
+
+      document.getElementById('visit-modal-pat-name').innerText = activePatient.name;
+      document.getElementById('visit-modal-pat-id').innerText = activePatient.id;
+      document.getElementById('visit-modal-pat-mob').innerText = activePatient.mobile;
+
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const dateStr = `${yy}${mm}${dd}`;
+
+      const todayDateFormatted = now.toISOString().split('T')[0];
+      let todayCount = 0;
+      clinicData.patients.forEach(p => {
+        p.visits.forEach(v => {
+          if (v.date === todayDateFormatted) todayCount++;
+        });
+      });
+
+      const tokenCounter = String(todayCount + 1).padStart(2, '0');
+      document.getElementById('visit-token-id').value = `O-${dateStr}${tokenCounter}`;
+      document.getElementById('visit-date').value = todayDateFormatted;
+      document.getElementById('visit-symptoms').value = "";
+      document.getElementById('visit-vitals').value = "";
+      document.getElementById('visit-fee').value = "300";
+      
+      document.getElementById('rx-builder-rows').innerHTML = `
+        <div class="rx-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center;">
+          <input type="text" class="rx-med-name" list="medicines-datalist" placeholder="Medicine Name">
+          <input type="text" class="rx-dose" placeholder="Dosage (e.g. 1-0-1)">
+          <input type="text" class="rx-timing" placeholder="Timing">
+          <input type="text" class="rx-duration" placeholder="Duration">
+          <button class="btn btn-danger" onclick="removeRxRow(this)" style="padding: 10px;">X</button>
+        </div>
+      `;
+      document.getElementById('visit-doctors-notes').value = "";
+      document.getElementById('add-visit-card').classList.remove('hidden');
+    }
+
+    function openEditVisitForm(visitIndex) {
+      const visit = activePatient.visits[visitIndex];
+      document.getElementById('visit-form-title').innerText = `✏️ Edit OPD Visit (${visit.token})`;
+      document.getElementById('edit-visit-index').value = visitIndex;
+
+      document.getElementById('visit-modal-pat-name').innerText = activePatient.name;
+      document.getElementById('visit-modal-pat-id').innerText = activePatient.id;
+      document.getElementById('visit-modal-pat-mob').innerText = activePatient.mobile;
+
+      document.getElementById('visit-token-id').value = visit.token;
+      document.getElementById('visit-date').value = visit.date;
+      document.getElementById('visit-symptoms').value = visit.symptoms;
+      document.getElementById('visit-vitals').value = visit.vitals;
+      document.getElementById('visit-fee').value = visit.fee;
+      document.getElementById('visit-doctors-notes').value = visit.notes || "";
+
+      const container = document.getElementById('rx-builder-rows');
+      container.innerHTML = "";
+      visit.rx.forEach(item => {
+        container.innerHTML += `
+          <div class="rx-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center; margin-top: 8px;">
+            <input type="text" class="rx-med-name" list="medicines-datalist" value="${item.med}" placeholder="Medicine Name">
+            <input type="text" class="rx-dose" value="${item.dose}" placeholder="Dosage">
+            <input type="text" class="rx-timing" value="${item.timing}" placeholder="Timing">
+            <input type="text" class="rx-duration" value="${item.duration}" placeholder="Duration">
+            <button class="btn btn-danger" onclick="removeRxRow(this)" style="padding: 10px;">X</button>
+          </div>
+        `;
+      });
+
+      document.getElementById('add-visit-card').classList.remove('hidden');
+    }
+
+    function closeVisitForm() {
+      document.getElementById('add-visit-card').classList.add('hidden');
+    }
+
+    function addRxRow() {
+      const container = document.getElementById('rx-builder-rows');
+      const div = document.createElement('div');
+      div.className = "rx-row";
+      div.style.cssText = "display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center; margin-top: 8px;";
+      div.innerHTML = `
+        <input type="text" class="rx-med-name" list="medicines-datalist" placeholder="Medicine Name">
+        <input type="text" class="rx-dose" placeholder="Dosage">
+        <input type="text" class="rx-timing" placeholder="Timing">
+        <input type="text" class="rx-duration" placeholder="Duration">
+        <button class="btn btn-danger" onclick="removeRxRow(this)" style="padding: 10px;">X</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function removeRxRow(btn) {
+      if (document.querySelectorAll('.rx-row').length > 1) {
+        btn.closest('.rx-row').remove();
+      } else {
+        alert("Kam se kam 1 medicine row honi chahiye.");
+      }
+    }
+
+    function saveVisitAndPrint() {
+      const editIndex = parseInt(document.getElementById('edit-visit-index').value);
+      const token = document.getElementById('visit-token-id').value;
+      const date = document.getElementById('visit-date').value;
+      const symptoms = document.getElementById('visit-symptoms').value.trim() || "General Consultation";
+      const vitals = document.getElementById('visit-vitals').value.trim() || "N/A";
+      const fee = document.getElementById('visit-fee').value || 0;
+      const notes = document.getElementById('visit-doctors-notes').value.trim();
+
+      const rxRows = document.querySelectorAll('.rx-row');
+      let rxList = [];
+
+      rxRows.forEach(row => {
+        const medName = row.querySelector('.rx-med-name').value.trim();
+        const dose = row.querySelector('.rx-dose').value.trim();
+        const timing = row.querySelector('.rx-timing').value.trim();
+        const duration = row.querySelector('.rx-duration').value.trim();
+
+        if (medName) {
+          rxList.push({ med: medName, dose, timing, duration });
+          if (!clinicData.medicines.some(m => m.name.toLowerCase() === medName.toLowerCase())) {
+            clinicData.medicines.push({ name: medName, category: "Custom Prescribed" });
+          }
+        }
+      });
+
+      const visitData = { token, date, symptoms, vitals, fee, notes, rx: rxList };
+
+      if (editIndex >= 0) {
+        // Update Existing Visit
+        activePatient.visits[editIndex] = visitData;
+        alert("Visit updated successfully!");
+      } else {
+        // Add New Visit
+        activePatient.visits.push(visitData);
+        alert("New visit saved successfully!");
+      }
+
+      saveToStorage();
+      selectPatient(activePatient.id);
+      closeVisitForm();
+      triggerPrintSlip(activePatient, visitData);
+    }
+
+    function deleteVisit(patId, visitIndex) {
+      if (confirm("Kya aap is OPD visit record ko delete karna chahte hain?")) {
+        const pat = clinicData.patients.find(p => p.id === patId);
+        pat.visits.splice(visitIndex, 1);
+        saveToStorage();
+        alert("Visit record deleted.");
+        if (activePatient && activePatient.id === patId) {
+          selectPatient(patId);
+        }
+        if(!document.getElementById('all-visits-tab').classList.contains('hidden')) {
+          renderAllVisitsDirectory();
+        }
+      }
+    }
+
+    function renderTimeline() {
+      const timeline = document.getElementById('history-timeline');
+      timeline.innerHTML = "";
+
+      if (activePatient.visits.length === 0) {
+        timeline.innerHTML = "<p>Koi purana visit record nahi hai.</p>";
+        return;
+      }
+
+      activePatient.visits.forEach((v, index) => {
+        let rxText = v.rx.map(item => `• ${item.med} (${item.dose}) - ${item.timing} for ${item.duration}`).join('<br>');
+        timeline.innerHTML += `
+          <div class="timeline-item">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>Token: ${v.token} | Date: ${v.date}</strong>
+              <span>Fee Paid: ₹${v.fee}</span>
+            </div>
+            <p style="font-size: 0.9rem; margin: 6px 0;"><strong>Symptoms:</strong> ${v.symptoms} (${v.vitals})</p>
+            <div style="font-size: 0.9rem; background: #fff; padding: 8px; border: 1px solid var(--border); border-radius: 4px; margin-top: 5px;">
+              <strong>Rx:</strong><br>${rxText}
+              ${v.notes ? `<br><strong>Notes:</strong> ${v.notes}` : ''}
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button class="btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="reprintVisit(${index})">🖨️ Re-Print</button>
+              <button class="btn btn-warning" style="padding: 4px 10px; font-size: 0.75rem;" onclick="openEditVisitForm(${index})">✏️ Edit</button>
+              <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="deleteVisit('${activePatient.id}', ${index})">🗑️ Delete</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function reprintVisit(visitIndex) {
+      const visit = activePatient.visits[visitIndex];
+      triggerPrintSlip(activePatient, visit);
+    }
+
+    function triggerPrintSlip(patient, visit) {
+      document.getElementById('print-date').innerText = visit.date;
+      document.getElementById('print-token').innerText = visit.token;
+      document.getElementById('print-pat-id').innerText = patient.id;
+      document.getElementById('print-name').innerText = patient.name;
+      document.getElementById('print-age-gender').innerText = `${patient.age} Yrs / ${patient.gender}`;
+      document.getElementById('print-mob').innerText = patient.mobile;
+      document.getElementById('print-symptoms').innerText = visit.symptoms;
+      document.getElementById('print-vitals').innerText = visit.vitals;
+      document.getElementById('print-fee').innerText = visit.fee;
+
+      if (visit.notes) {
+        document.getElementById('print-notes').innerText = visit.notes;
+        document.getElementById('print-notes-section').style.display = 'block';
+      } else {
+        document.getElementById('print-notes-section').style.display = 'none';
+      }
+
+      const tbody = document.getElementById('print-rx-tbody');
+      tbody.innerHTML = "";
+      visit.rx.forEach(item => {
+        tbody.innerHTML += `
+          <tr>
+            <td style="padding: 6px; border-bottom: 1px solid #eee;"><strong>${item.med}</strong></td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee;">${item.dose}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee;">${item.timing}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee;">${item.duration}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('printable-prescription').classList.remove('hidden');
+      window.print();
+      document.getElementById('printable-prescription').classList.add('hidden');
+    }
+
+    // --- MEDICINES & BACKUP ---
+    function populateMedicineDatalist() {
+      const datalist = document.getElementById('medicines-datalist');
+      datalist.innerHTML = "";
+      clinicData.medicines.forEach(m => {
+        datalist.innerHTML += `<option value="${m.name}">`;
+      });
+    }
+
+    function renderMedicineInventory() {
+      const tbody = document.getElementById('med-inventory-tbody');
+      tbody.innerHTML = "";
+      clinicData.medicines.forEach(m => {
+        tbody.innerHTML += `<tr><td><strong>${m.name}</strong></td><td>${m.category}</td></tr>`;
+      });
+    }
+
+    function addNewMedicineMaster() {
+      const name = document.getElementById('new-med-name').value.trim();
+      const cat = document.getElementById('new-med-cat').value.trim() || "General";
+      if (!name) return alert("Medicine name daalein!");
+
+      if (!clinicData.medicines.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+        clinicData.medicines.push({ name, category: cat });
+        saveToStorage();
+        renderMedicineInventory();
+        document.getElementById('new-med-name').value = "";
+        document.getElementById('new-med-cat').value = "";
+        alert("Medicine added successfully!");
+      } else {
+        alert("Ye medicine pehle se master list me hai!");
+      }
+    }
+
+    function exportBackupData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(clinicData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Clinic_Backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importBackupData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (imported.patients && imported.medicines) {
+            clinicData = imported;
+            saveToStorage();
+            renderMedicineInventory();
+            alert("Backup Successfully Restored!");
+          } else {
+            alert("Invalid backup file format!");
+          }
+        } catch (err) {
+          alert("Error reading JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function updateReports() {
+      let totalEarnings = 0;
+      let totalVisits = 0;
+      clinicData.patients.previous = 0;
+      clinicData.patients.forEach(p => {
+        p.visits.forEach(v => {
+          totalEarnings += Number(v.fee || 0);
+          totalVisits++;
+        });
+      });
+
+      document.getElementById('report-total-earnings').innerText = `₹${totalEarnings}`;
+      document.getElementById('report-total-patients').innerText = clinicData.patients.length;
+      document.getElementById('report-total-visits').innerText = totalVisits;
+    }
+  </script>
+</body>
+</html>
