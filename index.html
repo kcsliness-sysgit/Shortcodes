@@ -234,6 +234,56 @@
       .login-card h2 { font-size: 23px; }
     }
 
+
+    .clinic-app-header {
+      background: linear-gradient(115deg, #dce9cf, #a9c59e) !important;
+      color: #243d2a !important; border-bottom: 4px solid #6c9568;
+    }
+    .clinic-app-header p { color: #415a43 !important; }
+    .clinic-app-brand { display:flex; align-items:center; gap:14px; }
+    .clinic-brand-mark { display:grid; place-items:center; width:44px; height:44px; border-radius:50%; background:#f5f8ed; color:#42784b; font-size:27px; font-weight:800; border:1px solid #b7cbaa; }
+    .clinic-app-header .btn { color:#fff; background:#426f49; border-color:#426f49; }
+    .prescription-letterhead {
+      overflow:hidden; margin-bottom:18px; border:1px solid #9db995; border-radius:3px;
+      color:#283d2a; background:#f8faef;
+      font-family: Georgia, "Noto Serif Devanagari", serif;
+    }
+    .letterhead-topline { padding:8px 12px 2px; text-align:center; font-size:13px; font-weight:700; color:#415c3e; }
+    .letterhead-main {
+      display:flex; justify-content:space-between; align-items:center; gap:18px;
+      padding:14px 18px 18px; background:linear-gradient(105deg,#d9e8ce 0%,#b7d0a9 65%,#e6eddc 100%);
+      border-bottom:9px solid #fff; position:relative;
+    }
+    .letterhead-main::after {
+      content:""; position:absolute; bottom:-9px; left:0; right:0; height:3px; background:#9eb990;
+    }
+    .letterhead-brand { display:flex; align-items:center; gap:13px; min-width:0; }
+    .letterhead-logo {
+      display:grid; place-items:center; width:78px; height:78px; flex:0 0 78px;
+      border-radius:50%; border:2px solid #69885d; background:#f4f5e9; color:#4c6c43;
+      font-size:18px; font-weight:800; letter-spacing:1px;
+    }
+    .letterhead-brand h2 { color:#79564c; font-size:clamp(19px,3vw,28px); line-height:1.35; text-shadow:1px 1px #fff; }
+    .letterhead-english-title { margin-top:3px; color:#52684a; font-size:12px; font-weight:700; letter-spacing:.3px; }
+    .letterhead-doctor { text-align:right; flex:0 0 auto; }
+    .letterhead-doctor h3 { color:#3f5140; font-family:Arial,sans-serif; font-size:clamp(14px,2vw,20px); margin-bottom:5px; }
+    .letterhead-doctor p { font-family:Arial,sans-serif; font-size:11px; margin-top:3px; }
+    .letterhead-bottom { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 12px; background:#f4f7ed; font-size:11px; color:#536b4d; }
+    .letterhead-meta { display:flex; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
+    @media print {
+      .prescription-letterhead { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .letterhead-main { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    }
+    @media(max-width:600px) {
+      .clinic-app-brand { align-items:flex-start; }
+      .clinic-brand-mark { width:38px; height:38px; flex:0 0 38px; font-size:22px; }
+      .letterhead-main { align-items:flex-start; flex-direction:column; padding:12px; gap:12px; }
+      .letterhead-doctor { text-align:left; }
+      .letterhead-bottom { align-items:flex-start; flex-direction:column; }
+      .letterhead-meta { justify-content:flex-start; gap:8px; }
+      .letterhead-logo { width:58px; height:58px; flex-basis:58px; font-size:14px; }
+    }
+
   </style>
 </head>
 <body>
@@ -250,10 +300,13 @@
 
   <!-- MAIN APP CONTAINER -->
   <div id="app-container" class="hidden">
-    <header class="no-print">
-      <div>
-        <h2>🩺 City Health Clinic & OPD</h2>
-        <p style="font-size: 0.8rem; color: #94a3b8;">Dr. A. Sharma | OPD Management Dashboard</p>
+    <header class="no-print clinic-app-header">
+      <div class="clinic-app-brand">
+        <span class="clinic-brand-mark">✚</span>
+        <div>
+          <h2 id="clinic-app-title">डॉ. अभिलाष स्किन क्लिनिक</h2>
+          <p id="clinic-app-subtitle">Dr. Abhilash A. Sondarkar · B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</p>
+        </div>
       </div>
       <button class="btn btn-secondary" onclick="logout()">Secure Logout</button>
     </header>
@@ -509,16 +562,29 @@
 
   <!-- PRINTABLE LETTERHEAD -->
   <div id="printable-prescription" class="hidden">
-    <div style="border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-start;">
-      <div>
-        <h2>DR. A. SHARMA (M.B.B.S, M.D)</h2>
-        <p style="font-size: 0.85rem;">Senior Consultant Physician & Diabetologist</p>
-        <p style="font-size: 0.85rem;">Reg No: MCI-567890 | City Health Clinic, Main Road</p>
+    <div class="prescription-letterhead">
+      <div class="letterhead-topline">॥ श्री गणेशाय नमः ॥</div>
+      <div class="letterhead-main">
+        <div class="letterhead-brand">
+          <div class="letterhead-logo">SKIN</div>
+          <div>
+            <h2 id="print-clinic-title">डॉ. अभिलाष स्किन क्लिनिक</h2>
+            <p class="letterhead-english-title">Dr. Abhilash Skin Clinic</p>
+          </div>
+        </div>
+        <div class="letterhead-doctor">
+          <h3 id="print-doctor-name">Dr. Abhilash A. Sondarkar</h3>
+          <p id="print-doctor-qualifications">B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</p>
+          <p>Reg. No.: 65170</p>
+        </div>
       </div>
-      <div style="text-align: right; font-size: 0.9rem;">
-        <p><strong>Date:</strong> <span id="print-date"></span></p>
-        <p><strong>OPD Token:</strong> <span id="print-token"></span></p>
-        <p><strong>Patient ID:</strong> <span id="print-pat-id"></span></p>
+      <div class="letterhead-bottom">
+        <span>Patient Care · Skin Clinic</span>
+        <div class="letterhead-meta">
+          <span><strong>Date:</strong> <span id="print-date"></span></span>
+          <span><strong>OPD Token:</strong> <span id="print-token"></span></span>
+          <span><strong>Patient ID:</strong> <span id="print-pat-id"></span></span>
+        </div>
       </div>
     </div>
 
