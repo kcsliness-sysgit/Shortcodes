@@ -67,6 +67,11 @@
     .timeline-item::before { content: ''; position: absolute; left: -21px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
 
     .hidden { display: none !important; }
+    .rx-row{display:grid;grid-template-columns:minmax(180px,2fr) repeat(3,minmax(110px,1fr)) auto;gap:10px;align-items:start;margin-top:8px}
+    .section-panel{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:14px}
+    .dynamic-field-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(120px,2fr) auto;gap:8px;margin-top:8px;align-items:center}
+    textarea{resize:vertical;min-height:76px}
+    @media(max-width:700px){header{padding:14px;align-items:flex-start;gap:12px;flex-direction:column}header h2{font-size:1.15rem}.container{margin:12px auto;padding:0 10px}.card{padding:15px;border-radius:10px}.nav-tabs{margin-top:10px;gap:5px;padding:5px}.tab-btn{padding:9px 11px;font-size:.82rem}.form-grid{grid-template-columns:1fr;gap:12px}.patient-list-item{align-items:flex-start;flex-direction:column;gap:8px}.patient-list-item .btn{width:100%}#search-input{min-width:0}.rx-row{grid-template-columns:1fr 1fr}.rx-row .rx-med-name{grid-column:1/-1}.dynamic-field-row{grid-template-columns:1fr}table{display:block;overflow-x:auto;white-space:nowrap}#auth-wrapper{padding:16px;align-items:flex-start;padding-top:12vh}.login-card{padding:clamp(22px,5vw,34px);max-width:440px}.login-card h2{font-size:1.25rem}}
 
     @media print {
       body * { visibility: hidden; }
@@ -181,14 +186,10 @@
             <div class="form-group">
               
             </div>
-            <div class="form-group">
-              <label>Gender *</label>
-              <select id="new-pat-gender">
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            <div class="form-group"><label>Gender *</label><select id="new-pat-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+            <div class="form-group"><label>Blood Group (Optional)</label><select id="new-pat-blood"><option value="">Select blood group</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+            <div class="form-group"><label>Location (Optional)</label><input id="new-pat-location" placeholder="Area / locality"></div>
+            <div class="form-group"><label>City (Optional)</label><input id="new-pat-city" placeholder="City"></div>
           </div>
           <button type="submit" class="btn btn-success" style="margin-top: 15px;">Save Profile & Proceed to Visit</button>
         </form>
@@ -275,14 +276,10 @@
               <label>Mobile Number *</label>
               <input type="tel" id="edit-pat-mob" required>
             </div>
-                        <div class="form-group">
-              <label>Gender *</label>
-              <select id="edit-pat-gender">
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            <div class="form-group"><label>Gender *</label><select id="edit-pat-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+            <div class="form-group"><label>Blood Group (Optional)</label><select id="edit-pat-blood"><option value="">Select blood group</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+            <div class="form-group"><label>Location (Optional)</label><input id="edit-pat-location" placeholder="Area / locality"></div>
+            <div class="form-group"><label>City (Optional)</label><input id="edit-pat-city" placeholder="City"></div>
           </div>
           <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button type="submit" class="btn btn-warning">Update Profile</button>
@@ -315,14 +312,6 @@
             <label>Age at This Visit (Years) *</label>
             <input type="number" id="visit-age" min="0" max="130" step="1" required placeholder="Enter age for this visit">
           </div>
-          <div class="form-group">
-            <label>Chief Complaints / Symptoms</label>
-            <input type="text" id="visit-symptoms" placeholder="e.g. Fever, Cough">
-          </div>
-          <div class="form-group">
-            <label>Consultation Fee (₹)</label>
-            <input type="number" id="visit-fee" value="300">
-          </div>
         </div>
 
         <!-- SPLIT VITALS SECTION -->
@@ -341,17 +330,17 @@
             <input type="text" id="vital-pulse" placeholder="e.g. 72">
           </div>
         </div>
-
+        <button type="button" class="btn btn-secondary" onclick="addDynamicField('vitals-extra-fields','vital')" style="margin-top:8px;">+ Add Another Vital</button><div id="vitals-extra-fields"></div>
+        <div class="section-panel"><h5>Chief Complaints / Symptoms</h5><textarea id="visit-symptoms" rows="3" placeholder="Describe chief complaints and symptoms..."></textarea></div>
+        <div class="section-panel"><h5>History</h5><textarea id="visit-history" rows="3" placeholder="Relevant medical / personal / family history..."></textarea><h5 style="margin-top:12px;">Onset Details</h5>
+          <div class="form-grid"><div class="form-group"><label>Onset</label><textarea id="visit-onset" rows="2" placeholder="When/how it started"></textarea></div><div class="form-group"><label>Duration / Since</label><textarea id="visit-onset-duration" rows="2" placeholder="How long / since when"></textarea></div><div class="form-group"><label>Progression / Pattern</label><textarea id="visit-onset-pattern" rows="2" placeholder="Continuous, intermittent, worsening..."></textarea></div></div></div>
         <h4 style="margin-top: 20px;">Prescription Builder</h4>
         <div id="rx-builder-rows" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;"></div>
         <button class="btn btn-secondary" onclick="addRxRow()" style="margin-top: 10px; font-size: 0.85rem;">+ Add Medicine</button>
 
-        <div class="form-group" style="margin-top: 15px;">
-          <label>Doctor's Special Notes / Advice for Patient</label>
-          <textarea id="visit-doctors-notes" rows="2" placeholder="e.g. Drink plenty of warm water, review after 3 days."></textarea>
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <div class="section-panel"><label>Doctor's Special Notes / Advice for Patient</label><textarea id="visit-doctors-notes" rows="2" placeholder="e.g. Drink plenty of warm water, review after 3 days."></textarea><button type="button" class="btn btn-secondary" style="margin-top:8px;" onclick="addDynamicField('extra-notes-fields','note')">+ Add Another Note</button><div id="extra-notes-fields"></div></div>
+        <div class="section-panel"><h4>Fees</h4><div class="form-grid"><div class="form-group"><label>Consultation Fee (₹)</label><input type="number" id="visit-fee" min="0" value="300" oninput="calculateTotalFees()"></div></div><button type="button" class="btn btn-secondary" style="margin-top:8px;" onclick="addDynamicField('extra-fees-fields','fee')">+ Add Another Fee</button><div id="extra-fees-fields"></div><p style="margin-top:12px;font-weight:700;">Total Fees: ₹<span id="visit-total-fees">300</span></p></div>
+        <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap:wrap;">
           <button class="btn btn-success" onclick="saveVisitAndPrint()">💾 Save Visit & Print Prescription</button>
           <button class="btn btn-secondary" onclick="closeVisitForm()">Cancel</button>
         </div>
@@ -387,6 +376,7 @@
       <strong>Vitals:</strong> <span id="print-vitals"></span>
     </div>
 
+    <div style="font-size:.9rem;margin:8px 0;"><strong>History / Onset:</strong> <span id="print-history-details"></span></div>
     <hr style="border: 0.5px solid #000; margin: 15px 0;">
 
     <h3 style="margin-bottom: 10px;">Rx (Prescription)</h3>
@@ -510,7 +500,7 @@
         container.innerHTML += `
           <div class="patient-list-item">
             <div>
-              <strong>${p.name}</strong> (${p.gender}, ${p.age} yrs) | ID: <code>${p.id}</code> | Mob: ${p.mobile}
+              <strong>${p.name}</strong> (${p.gender}) | ID: <code>${p.id}</code> | Mob: ${p.mobile}
             </div>
             <button class="btn" style="padding: 4px 10px; font-size: 0.8rem;" onclick="selectPatient('${p.id}')">Select Profile</button>
           </div>
@@ -558,7 +548,7 @@
         container.innerHTML += `
           <div style="display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 6px;">
             <div>
-              <strong>${pat.name}</strong> (${pat.gender}, ${pat.age} yrs) | ID: <code>${pat.id}</code> | Mob: ${pat.mobile}
+              <strong>${pat.name}</strong> (${pat.gender}) | ID: <code>${pat.id}</code> | Mob: ${pat.mobile}
             </div>
             <button class="btn" style="padding: 4px 10px; font-size: 0.8rem;" onclick="selectPatient('${pat.id}')">Select Profile</button>
           </div>
@@ -592,6 +582,9 @@
       document.getElementById('edit-pat-name').value = activePatient.name;
       document.getElementById('edit-pat-mob').value = activePatient.mobile;
       document.getElementById('edit-pat-gender').value = activePatient.gender;
+      document.getElementById('edit-pat-blood').value = activePatient.bloodGroup || "";
+      document.getElementById('edit-pat-location').value = activePatient.location || "";
+      document.getElementById('edit-pat-city').value = activePatient.city || "";
       document.getElementById('edit-patient-card').classList.remove('hidden');
     }
 
@@ -604,6 +597,9 @@
       activePatient.name = document.getElementById('edit-pat-name').value.trim();
       activePatient.mobile = document.getElementById('edit-pat-mob').value.trim();
       activePatient.gender = document.getElementById('edit-pat-gender').value;
+      activePatient.bloodGroup = document.getElementById('edit-pat-blood').value;
+      activePatient.location = document.getElementById('edit-pat-location').value.trim();
+      activePatient.city = document.getElementById('edit-pat-city').value.trim();
 
       saveToStorage();
       selectPatient(activePatient.id);
@@ -620,6 +616,9 @@
         name: document.getElementById('new-pat-name').value.trim(),
         mobile: mob,
         gender: document.getElementById('new-pat-gender').value,
+        bloodGroup: document.getElementById('new-pat-blood').value,
+        location: document.getElementById('new-pat-location').value.trim(),
+        city: document.getElementById('new-pat-city').value.trim(),
         visits: []
       };
 
@@ -704,20 +703,14 @@
       document.getElementById('visit-date').value = todayDateFormatted;
       document.getElementById('visit-age').value = "";
       document.getElementById('visit-symptoms').value = "";
+      document.getElementById('visit-history').value = ""; document.getElementById('visit-onset').value = ""; document.getElementById('visit-onset-duration').value = ""; document.getElementById('visit-onset-pattern').value = "";
+      document.getElementById('vitals-extra-fields').innerHTML = ""; document.getElementById('extra-notes-fields').innerHTML = ""; document.getElementById('extra-fees-fields').innerHTML = ""; document.getElementById('visit-total-fees').innerText = "300";
       document.getElementById('vital-weight').value = "";
       document.getElementById('vital-bp').value = "";
       document.getElementById('vital-pulse').value = "";
       document.getElementById('visit-fee').value = "300";
       
-      document.getElementById('rx-builder-rows').innerHTML = `
-        <div class="rx-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center;">
-          <input type="text" class="rx-med-name" list="medicines-datalist" placeholder="Medicine Name">
-          <input type="text" class="rx-dose" placeholder="Dosage (e.g. 1-0-1)">
-          <input type="text" class="rx-timing" placeholder="Timing">
-          <input type="text" class="rx-duration" placeholder="Duration">
-          <button class="btn btn-danger" onclick="removeRxRow(this)" style="padding: 10px;">X</button>
-        </div>
-      `;
+      document.getElementById('rx-builder-rows').innerHTML = rxRowMarkup();
       document.getElementById('visit-doctors-notes').value = "";
       document.getElementById('add-visit-card').classList.remove('hidden');
     }
@@ -736,8 +729,12 @@
       // Keep older records editable: use their legacy patient age if visit-specific age is absent.
       document.getElementById('visit-age').value = visit.age ?? activePatient.age ?? "";
       document.getElementById('visit-symptoms').value = visit.symptoms;
-      document.getElementById('visit-fee').value = visit.fee;
+      document.getElementById('visit-fee').value = visit.consultationFee ?? visit.fee ?? 300;
       document.getElementById('visit-doctors-notes').value = visit.notes || "";
+      document.getElementById('visit-history').value = visit.history || ""; document.getElementById('visit-onset').value = visit.onset || ""; document.getElementById('visit-onset-duration').value = visit.onsetDuration || ""; document.getElementById('visit-onset-pattern').value = visit.onsetPattern || "";
+      document.getElementById('vitals-extra-fields').innerHTML = ""; document.getElementById('extra-notes-fields').innerHTML = ""; document.getElementById('extra-fees-fields').innerHTML = "";
+      (visit.extraVitals||[]).forEach(x=>addDynamicField('vitals-extra-fields','vital',x.title,x.value)); (visit.extraNotes||[]).forEach(x=>addDynamicField('extra-notes-fields','note',x.title,x.value)); (visit.extraFees||[]).forEach(x=>addDynamicField('extra-fees-fields','fee',x.title,x.amount));
+      document.getElementById('visit-total-fees').innerText = String(visit.totalFee ?? visit.fee ?? 0);
 
       // Parse vitals text if exists
       document.getElementById('vital-weight').value = "";
@@ -747,15 +744,7 @@
       const container = document.getElementById('rx-builder-rows');
       container.innerHTML = "";
       visit.rx.forEach(item => {
-        container.innerHTML += `
-          <div class="rx-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center; margin-top: 8px;">
-            <input type="text" class="rx-med-name" list="medicines-datalist" value="${item.med}" placeholder="Medicine Name">
-            <input type="text" class="rx-dose" value="${item.dose}" placeholder="Dosage">
-            <input type="text" class="rx-timing" value="${item.timing}" placeholder="Timing">
-            <input type="text" class="rx-duration" value="${item.duration}" placeholder="Duration">
-            <button class="btn btn-danger" onclick="removeRxRow(this)" style="padding: 10px;">X</button>
-          </div>
-        `;
+        container.insertAdjacentHTML('beforeend', rxRowMarkup(item));
       });
 
       document.getElementById('add-visit-card').classList.remove('hidden');
@@ -765,19 +754,27 @@
       document.getElementById('add-visit-card').classList.add('hidden');
     }
 
+    function rxRowMarkup(item={}) {
+      const dose=String(item.dose||''),timing=String(item.timing||''),duration=String(item.duration||'');
+      const doses=['1-0-1','1-1-1','1-0-0','0-0-1','0-1-0','1-1-0','1-0-½','½-0-½','SOS','As directed'],times=['After Meal','Before Meal','With Meal','Empty Stomach','Any Time'];
+      const kd=doses.includes(dose),kt=times.includes(timing),dm=duration.match(/^(\d+)\s*(Days?|Weeks?|Every month)$/i),unit=dm?(dm[2].toLowerCase().startsWith('day')?'Days':dm[2].toLowerCase().startsWith('week')?'Weeks':'Every month'):(['EveryDay','Regular'].includes(duration)?duration:'Days'),num=dm?dm[1]:'';
+      return `<div class="rx-row"><input type="text" class="rx-med-name" list="medicines-datalist" autocomplete="off" value="${escapeAttr(item.med||'')}" placeholder="Type medicine name...">
+      <div><select class="rx-dose-select" onchange="toggleRxCustom(this,'dose')">${doses.map(x=>`<option ${x===dose?'selected':''}>${x}</option>`).join('')}<option value="__custom__" ${!kd&&dose?'selected':''}>Custom…</option></select><input class="rx-dose-custom ${kd||!dose?'hidden':''}" value="${escapeAttr(kd?'':dose)}" placeholder="Custom dosage"></div>
+      <div><select class="rx-timing-select" onchange="toggleRxCustom(this,'timing')">${times.map(x=>`<option ${x===timing?'selected':''}>${x}</option>`).join('')}<option value="__custom__" ${!kt&&timing?'selected':''}>Custom…</option></select><input class="rx-timing-custom ${kt||!timing?'hidden':''}" value="${escapeAttr(kt?'':timing)}" placeholder="Custom timing"></div>
+      <div><div class="custom-inline"><input type="number" class="rx-duration-number ${['EveryDay','Regular'].includes(unit)?'hidden':''}" min="1" value="${escapeAttr(num)}" placeholder="No."><select class="rx-duration-unit" onchange="toggleDurationNumber(this)"><option ${unit==='Days'?'selected':''}>Days</option><option ${unit==='Weeks'?'selected':''}>Weeks</option><option ${unit==='Every month'?'selected':''}>Every month</option><option ${unit==='EveryDay'?'selected':''}>EveryDay</option><option ${unit==='Regular'?'selected':''}>Regular</option></select></div></div><button type="button" class="btn btn-danger" onclick="removeRxRow(this)" style="padding:10px;">×</button></div>`;
+    }
+    function escapeAttr(v){return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function toggleRxCustom(sel,kind){const input=sel.parentElement.querySelector('.rx-'+kind+'-custom');input.classList.toggle('hidden',sel.value!=='__custom__');if(sel.value==='__custom__')input.focus();}
+    function getRxValue(row,kind){const sel=row.querySelector('.rx-'+kind+'-select'),custom=row.querySelector('.rx-'+kind+'-custom');return sel.value==='__custom__'?custom.value.trim():sel.value;}
+    function toggleDurationNumber(sel){const input=sel.parentElement.querySelector('.rx-duration-number'),hide=['EveryDay','Regular'].includes(sel.value);input.classList.toggle('hidden',hide);if(hide)input.value='';}
+    function getRxDuration(row){const unit=row.querySelector('.rx-duration-unit').value;if(['EveryDay','Regular'].includes(unit))return unit;const num=row.querySelector('.rx-duration-number').value.trim();return num?num+' '+unit:unit;}
+    function addDynamicField(id,kind,title='',value=''){const row=document.createElement('div');row.className='dynamic-field-row';row.innerHTML=`<input class="dynamic-title" placeholder="${kind==='vital'?'Vital name (e.g. Sugar)':kind==='fee'?'Fee title':'Note title'}" value="${escapeAttr(title)}"><input class="dynamic-value" type="${kind==='fee'?'number':'text'}" placeholder="${kind==='fee'?'Amount (₹)':kind==='vital'?'Value':'Note'}" value="${escapeAttr(value)}" ${kind==='fee'?'min="0" oninput="calculateTotalFees()"':''}><button type="button" class="btn btn-danger" onclick="this.parentElement.remove();calculateTotalFees()" style="padding:8px 12px;">×</button>`;document.getElementById(id).appendChild(row);calculateTotalFees();}
+    function calculateTotalFees(){const base=document.getElementById('visit-fee'),out=document.getElementById('visit-total-fees');if(!base||!out)return;const extra=[...document.querySelectorAll('#extra-fees-fields .dynamic-value')].reduce((sum,e)=>sum+Number(e.value||0),0);out.innerText=String(Number(base.value||0)+extra);}
+
     function addRxRow() {
       const container = document.getElementById('rx-builder-rows');
       const div = document.createElement('div');
-      div.className = "rx-row";
-      div.style.cssText = "display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center; margin-top: 8px;";
-      div.innerHTML = `
-        <input type="text" class="rx-med-name" list="medicines-datalist" placeholder="Medicine Name">
-        <input type="text" class="rx-dose" placeholder="Dosage">
-        <input type="text" class="rx-timing" placeholder="Timing">
-        <input type="text" class="rx-duration" placeholder="Duration">
-        <button class="btn btn-danger" onclick="removeRxRow(this)" style="padding: 10px;">X</button>
-      `;
-      container.appendChild(div);
+      div.innerHTML = rxRowMarkup(); container.appendChild(div.firstElementChild);
     }
 
     function removeRxRow(btn) {
@@ -798,8 +795,13 @@
         return;
       }
       const symptoms = document.getElementById('visit-symptoms').value.trim() || "General Consultation";
-      const fee = document.getElementById('visit-fee').value || 0;
+      const consultationFee = Number(document.getElementById('visit-fee').value || 0);
+      const extraFees = [...document.querySelectorAll('#extra-fees-fields .dynamic-field-row')].map(r=>({title:r.querySelector('.dynamic-title').value.trim(),amount:Number(r.querySelector('.dynamic-value').value||0)})).filter(x=>x.title||x.amount);
+      const totalFee = consultationFee + extraFees.reduce((sum,x)=>sum+x.amount,0), fee=totalFee;
       const notes = document.getElementById('visit-doctors-notes').value.trim();
+      const history=document.getElementById('visit-history').value.trim(), onset=document.getElementById('visit-onset').value.trim(), onsetDuration=document.getElementById('visit-onset-duration').value.trim(), onsetPattern=document.getElementById('visit-onset-pattern').value.trim();
+      const extraNotes=[...document.querySelectorAll('#extra-notes-fields .dynamic-field-row')].map(r=>({title:r.querySelector('.dynamic-title').value.trim(),value:r.querySelector('.dynamic-value').value.trim()})).filter(x=>x.title||x.value);
+      const extraVitals=[...document.querySelectorAll('#vitals-extra-fields .dynamic-field-row')].map(r=>({title:r.querySelector('.dynamic-title').value.trim(),value:r.querySelector('.dynamic-value').value.trim()})).filter(x=>x.title||x.value);
 
       // Combine split vitals
       const wt = document.getElementById('vital-weight').value.trim();
@@ -809,6 +811,7 @@
       if (wt) vitalsArr.push(`Wt: ${wt}kg`);
       if (bp) vitalsArr.push(`BP: ${bp}`);
       if (pulse) vitalsArr.push(`Pulse: ${pulse}`);
+      extraVitals.forEach(x=>{if(x.title&&x.value)vitalsArr.push(`${x.title}: ${x.value}`);});
       const vitals = vitalsArr.length > 0 ? vitalsArr.join(', ') : 'N/A';
 
       const rxRows = document.querySelectorAll('.rx-row');
@@ -816,9 +819,9 @@
 
       rxRows.forEach(row => {
         const medName = row.querySelector('.rx-med-name').value.trim();
-        const dose = row.querySelector('.rx-dose').value.trim();
-        const timing = row.querySelector('.rx-timing').value.trim();
-        const duration = row.querySelector('.rx-duration').value.trim();
+        const dose = getRxValue(row,'dose');
+        const timing = getRxValue(row,'timing');
+        const duration = getRxDuration(row);
 
         if (medName) {
           rxList.push({ med: medName, dose, timing, duration });
@@ -828,7 +831,7 @@
         }
       });
 
-      const visitData = { token, date, age: Number(age), symptoms, vitals, fee, notes, rx: rxList };
+      const visitData = { token, date, age: Number(age), symptoms, vitals, consultationFee, extraFees, totalFee, fee, notes, history, onset, onsetDuration, onsetPattern, extraVitals, extraNotes, rx: rxList };
 
       if (editIndex >= 0) {
         activePatient.visits[editIndex] = visitData;
@@ -899,7 +902,9 @@
       document.getElementById('print-mob').innerText = patient.mobile;
       document.getElementById('print-symptoms').innerText = visit.symptoms;
       document.getElementById('print-vitals').innerText = visit.vitals;
-      document.getElementById('print-fee').innerText = visit.fee;
+      document.getElementById('print-fee').innerText = visit.totalFee ?? visit.fee;
+      const clinicalDetails=[visit.history?'History: '+visit.history:'',visit.onset?'Onset: '+visit.onset:'',visit.onsetDuration?'Duration: '+visit.onsetDuration:'',visit.onsetPattern?'Pattern: '+visit.onsetPattern:'',...(visit.extraNotes||[]).map(n=>n.title+': '+n.value)].filter(Boolean).join(' | ');
+      const printHistory=document.getElementById('print-history-details'); if(printHistory)printHistory.innerText=clinicalDetails;
 
       if (visit.notes) {
         document.getElementById('print-notes').innerText = visit.notes;
@@ -928,11 +933,8 @@
 
     // --- MEDICINES & BACKUP ---
     function populateMedicineDatalist() {
-      const datalist = document.getElementById('medicines-datalist');
-      datalist.innerHTML = "";
-      clinicData.medicines.forEach(m => {
-        datalist.innerHTML += `<option value="${m.name}">`;
-      });
+      const datalist=document.getElementById('medicines-datalist');datalist.innerHTML="";
+      clinicData.medicines.forEach(m=>{datalist.innerHTML+=`<option value="${escapeAttr(m.name)}">`;});
     }
 
     function renderMedicineInventory() {
