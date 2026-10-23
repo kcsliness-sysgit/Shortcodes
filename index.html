@@ -1025,7 +1025,8 @@
         }
       });
 
-      const visitData = { token, date, age: Number(age), symptoms, vitals, consultationFee, extraFees, totalFee, fee, notes, history, onset, onsetDuration, onsetPattern, extraVitals, extraNotes, rx: rxList };
+      const consultationFeeTitle = document.getElementById('visit-fee-title').value.trim() || 'Consultation Fee';
+      const visitData = { token, date, age: Number(age), symptoms, vitals, consultationFeeTitle, consultationFee, extraFees, totalFee, fee, notes, history, onset, onsetDuration, onsetPattern, extraVitals, extraNotes, rx: rxList };
 
       if (editIndex >= 0) {
         activePatient.visits[editIndex] = visitData;
