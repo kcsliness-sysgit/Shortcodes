@@ -151,7 +151,7 @@
               <p style="font-size: 0.85rem; font-weight: bold; color: var(--success);" id="profile-lifetime-spent">Lifetime Total Paid: ₹0</p>
             </div>
             <div style="display: flex; gap: 8px;">
-              <button class="btn btn-warning" onclick="openEditPatientModal()">✏️ Edit Profile/Age</button>
+              <button class="btn btn-warning" onclick="openEditPatientModal()">✏️ Edit Profile</button>
               <button class="btn btn-success" onclick="openNewVisitForm()">+ Add New Visit</button>
             </div>
           </div>
@@ -179,8 +179,7 @@
               <input type="text" id="new-pat-name" required placeholder="Patient Name">
             </div>
             <div class="form-group">
-              <label>Age *</label>
-              <input type="number" id="new-pat-age" required placeholder="Age in Years">
+              
             </div>
             <div class="form-group">
               <label>Gender *</label>
@@ -276,11 +275,7 @@
               <label>Mobile Number *</label>
               <input type="tel" id="edit-pat-mob" required>
             </div>
-            <div class="form-group">
-              <label>Age (Years) * [Editable]</label>
-              <input type="number" id="edit-pat-age" required>
-            </div>
-            <div class="form-group">
+                        <div class="form-group">
               <label>Gender *</label>
               <select id="edit-pat-gender">
                 <option value="Male">Male</option>
@@ -315,6 +310,10 @@
           <div class="form-group">
             <label>Visit Date</label>
             <input type="date" id="visit-date">
+          </div>
+          <div class="form-group">
+            <label>Age at This Visit (Years) *</label>
+            <input type="number" id="visit-age" min="0" max="130" step="1" required placeholder="Enter age for this visit">
           </div>
           <div class="form-group">
             <label>Chief Complaints / Symptoms</label>
@@ -575,7 +574,7 @@
       if (!activePatient) return;
 
       document.getElementById('profile-name').innerText = activePatient.name;
-      document.getElementById('profile-details').innerText = `ID: ${activePatient.id} | Age: ${activePatient.age} Yrs | Gender: ${activePatient.gender} | Mob: ${activePatient.mobile}`;
+      document.getElementById('profile-details').innerText = `ID: ${activePatient.id} | Gender: ${activePatient.gender} | Mob: ${activePatient.mobile}`;
 
       let lifetimeSpent = activePatient.visits.reduce((sum, v) => sum + Number(v.fee || 0), 0);
       document.getElementById('profile-lifetime-spent').innerText = `Lifetime Total Paid: ₹${lifetimeSpent}`;
@@ -586,13 +585,12 @@
       document.getElementById('no-record-found-box').classList.add('hidden');
     }
 
-    // --- EDIT PATIENT & AGE ---
+    // --- EDIT PATIENT PROFILE ---
     function openEditPatientModal() {
       if (!activePatient) return;
       document.getElementById('edit-pat-id').value = activePatient.id;
       document.getElementById('edit-pat-name').value = activePatient.name;
       document.getElementById('edit-pat-mob').value = activePatient.mobile;
-      document.getElementById('edit-pat-age').value = activePatient.age;
       document.getElementById('edit-pat-gender').value = activePatient.gender;
       document.getElementById('edit-patient-card').classList.remove('hidden');
     }
@@ -605,7 +603,6 @@
       e.preventDefault();
       activePatient.name = document.getElementById('edit-pat-name').value.trim();
       activePatient.mobile = document.getElementById('edit-pat-mob').value.trim();
-      activePatient.age = document.getElementById('edit-pat-age').value;
       activePatient.gender = document.getElementById('edit-pat-gender').value;
 
       saveToStorage();
@@ -622,7 +619,6 @@
         id: id,
         name: document.getElementById('new-pat-name').value.trim(),
         mobile: mob,
-        age: document.getElementById('new-pat-age').value,
         gender: document.getElementById('new-pat-gender').value,
         visits: []
       };
@@ -706,6 +702,7 @@
       const tokenCounter = String(todayCount + 1).padStart(2, '0');
       document.getElementById('visit-token-id').value = `O-${dateStr}${tokenCounter}`;
       document.getElementById('visit-date').value = todayDateFormatted;
+      document.getElementById('visit-age').value = "";
       document.getElementById('visit-symptoms').value = "";
       document.getElementById('vital-weight').value = "";
       document.getElementById('vital-bp').value = "";
@@ -736,6 +733,8 @@
 
       document.getElementById('visit-token-id').value = visit.token;
       document.getElementById('visit-date').value = visit.date;
+      // Keep older records editable: use their legacy patient age if visit-specific age is absent.
+      document.getElementById('visit-age').value = visit.age ?? activePatient.age ?? "";
       document.getElementById('visit-symptoms').value = visit.symptoms;
       document.getElementById('visit-fee').value = visit.fee;
       document.getElementById('visit-doctors-notes').value = visit.notes || "";
@@ -791,6 +790,13 @@
       const editIndex = parseInt(document.getElementById('edit-visit-index').value);
       const token = document.getElementById('visit-token-id').value;
       const date = document.getElementById('visit-date').value;
+      const ageInput = document.getElementById('visit-age');
+      const age = ageInput.value.trim();
+      if (age === "" || !Number.isFinite(Number(age)) || Number(age) < 0 || Number(age) > 130) {
+        alert("Please enter a valid age for this OPD visit (0–130 years).");
+        ageInput.focus();
+        return;
+      }
       const symptoms = document.getElementById('visit-symptoms').value.trim() || "General Consultation";
       const fee = document.getElementById('visit-fee').value || 0;
       const notes = document.getElementById('visit-doctors-notes').value.trim();
@@ -822,7 +828,7 @@
         }
       });
 
-      const visitData = { token, date, symptoms, vitals, fee, notes, rx: rxList };
+      const visitData = { token, date, age: Number(age), symptoms, vitals, fee, notes, rx: rxList };
 
       if (editIndex >= 0) {
         activePatient.visits[editIndex] = visitData;
@@ -863,7 +869,7 @@
               <strong>Token: ${v.token} | Date: ${v.date}</strong>
               <span>Fee Paid: ₹${v.fee}</span>
             </div>
-            <p style="font-size: 0.9rem; margin: 6px 0;"><strong>Symptoms:</strong> ${v.symptoms} (${v.vitals})</p>
+            <p style="font-size: 0.9rem; margin: 6px 0;"><strong>Age:</strong> ${v.age ?? activePatient.age ?? "Not recorded"} Yrs &nbsp; <strong>Symptoms:</strong> ${v.symptoms} (${v.vitals})</p>
             <div style="font-size: 0.9rem; background: #fff; padding: 8px; border: 1px solid var(--border); border-radius: 4px; margin-top: 5px;">
               <strong>Rx:</strong><br>${rxText}
               ${v.notes ? `<br><strong>Notes:</strong> ${v.notes}` : ''}
@@ -887,7 +893,9 @@
       document.getElementById('print-token').innerText = visit.token;
       document.getElementById('print-pat-id').innerText = patient.id;
       document.getElementById('print-name').innerText = patient.name;
-      document.getElementById('print-age-gender').innerText = `${patient.age} Yrs / ${patient.gender}`;
+      // Prefer the age saved with this visit; fallback only for older records created before visit-age tracking.
+      const visitAge = visit.age ?? patient.age;
+      document.getElementById('print-age-gender').innerText = `${visitAge !== undefined && visitAge !== null && visitAge !== "" ? `${visitAge} Yrs` : "Age not recorded"} / ${patient.gender}`;
       document.getElementById('print-mob').innerText = patient.mobile;
       document.getElementById('print-symptoms').innerText = visit.symptoms;
       document.getElementById('print-vitals').innerText = visit.vitals;
