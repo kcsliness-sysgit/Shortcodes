@@ -422,7 +422,7 @@
         <form id="edit-patient-form" onsubmit="saveEditedPatient(event)">
           <div class="form-grid">
             <div class="form-group">
-              <label>Patient ID (Fixed)</label>
+              <label>Patient ID (Auto-updates when mobile changes)</label>
               <input type="text" id="edit-pat-id" readonly style="background: #f1f5f9;">
             </div>
             <div class="form-group">
@@ -752,8 +752,35 @@
 
     function saveEditedPatient(e) {
       e.preventDefault();
+      const updatedMobile = document.getElementById('edit-pat-mob').value.trim();
+      const currentMobile = String(activePatient.mobile || '').trim();
+
+      if (updatedMobile !== currentMobile) {
+        const confirmed = confirm(
+          "WARNING: Changing this patient's mobile number will generate a new Patient ID. Existing patient history may become unlinked from records that reference the old ID.\n\nContinue with the new mobile number and Patient ID?"
+        );
+        if (!confirmed) {
+          document.getElementById('edit-pat-mob').value = currentMobile;
+          return;
+        }
+
+        const last3 = updatedMobile.slice(-3);
+        const existing = clinicData.patients.filter(p =>
+          p !== activePatient && String(p.mobile || '').slice(-3) === last3
+        );
+        const counter = String(existing.length).padStart(2, '0');
+        const newId = `P-${last3}-${counter}`;
+        const duplicateId = clinicData.patients.some(p => p !== activePatient && p.id === newId);
+        if (duplicateId) {
+          alert("A Patient ID conflict was detected. Please review the mobile number or existing patient records before updating.");
+          return;
+        }
+        activePatient.id = newId;
+        document.getElementById('edit-pat-id').value = newId;
+      }
+
       activePatient.name = document.getElementById('edit-pat-name').value.trim();
-      activePatient.mobile = document.getElementById('edit-pat-mob').value.trim();
+      activePatient.mobile = updatedMobile;
       activePatient.gender = document.getElementById('edit-pat-gender').value;
       activePatient.bloodGroup = document.getElementById('edit-pat-blood').value;
       activePatient.location = document.getElementById('edit-pat-location').value.trim();
