@@ -288,18 +288,15 @@
 </head>
 <body>
 
-  <!-- LOGIN WRAPPER -->
-  <div id="auth-wrapper">
-    <div class="login-card">
-      <h2>🔐 Doctor Admin Portal</h2>
-      <input type="password" id="admin-password-input" placeholder="Enter Admin Password" style="width:100%; margin-bottom: 15px;">
-      <button class="btn" style="width:100%;" onclick="verifyLogin()">Login to Clinic</button>
-      <p id="login-error" style="color:var(--danger); font-size:0.85rem; margin-top:10px; display:none;">Incorrect Password! (Default: doctor123)</p>
-    </div>
-  </div>
-
+  <section id="excel-connect-panel" class="card" style="max-width:760px;margin:24px auto;padding:24px;">
+    <h2 style="color:#17314a;">📂 Import / Connect Local Excel File</h2>
+    <p style="margin:10px 0 16px;">Abhi connect nahi karna toh cancel kar sakte hain aur empty pages dekh sakte hain. Patient, OPD ya medicine entry ke liye local .xlsx file connect karni hogi.</p>
+    <button class="btn" onclick="connectExcelFile()">📂 Import / Connect .xlsx File</button>
+    <label class="btn btn-secondary" style="margin-left:8px;cursor:pointer;">Choose Excel File <input id="first-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" onchange="importFirstExcelFile(event)"></label>
+    <p id="excel-connection-status" role="status" style="margin-top:12px;color:#64748b;">No Excel file connected. You can browse empty pages.</p>
+  </section>
   <!-- MAIN APP CONTAINER -->
-  <div id="app-container" class="hidden">
+  <div id="app-container">
     <header class="no-print clinic-app-header">
       <div class="clinic-app-brand">
         <span class="clinic-brand-mark">✚</span>
@@ -638,63 +635,35 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
-    const ADMIN_PASS = "doctor123";
-
-    let clinicData = JSON.parse(localStorage.getItem('clinic_master_data')) || {
-      patients: [
-        {
-          id: "P-310-00",
-          name: "Ramesh Kumar",
-          mobile: "9876543310",
-          age: 34,
-          gender: "Male",
-          visits: [
-            { token: "O-26102301", date: "2026-10-23", symptoms: "Fever & Cold", vitals: "Wt: 68kg, BP: 120/80, Pulse: 72", fee: 300, notes: "Take rest", rx: [{med: "Tab Paracetamol 500mg", dose: "1-0-1", timing: "After Food", duration: "3 Days"}] }
-          ]
-        }
-      ],
-      medicines: [
-        { name: "Tab Paracetamol 500mg", category: "Tablet" },
-        { name: "Tab Pantocid 40mg", category: "Tablet" },
-        { name: "Syrup Benadryl 100ml", category: "Syrup" },
-        { name: "Cap Amoxicillin 500mg", category: "Capsule" }
-      ]
-    };
+    let clinicData = { patients: [], medicines: [] };
 
     let activePatient = null;
 
+    let activePatient = null;
+    let connectedExcelHandle = null;
+    let excelConnected = false;
+    let excelWriteQueue = Promise.resolve();
+
     window.onload = function() {
-      if (sessionStorage.getItem('clinic_logged_in') === 'true') {
-        document.getElementById('auth-wrapper').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        initApp();
-      }
+      initApp();
+      restoreExcelConnection();
     };
 
     function saveToStorage() {
-      localStorage.setItem('clinic_master_data', JSON.stringify(clinicData));
       updateReports();
       populateMedicineDatalist();
       renderRecentPatients();
-    }
-
-    function verifyLogin() {
-      const pass = document.getElementById('admin-password-input').value;
-      if (pass === ADMIN_PASS) {
-        sessionStorage.setItem('clinic_logged_in', 'true');
-        document.getElementById('auth-wrapper').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        initApp();
-      } else {
-        document.getElementById('login-error').style.display = 'block';
+      if (excelConnected && connectedExcelHandle) {
+        excelWriteQueue = excelWriteQueue.then(writeConnectedWorkbook).catch(err => setExcelStatus('Excel save failed: ' + err.message, true));
       }
     }
 
-    function logout() {
-      sessionStorage.removeItem('clinic_logged_in');
-      document.getElementById('app-container').classList.add('hidden');
-      document.getElementById('auth-wrapper').classList.remove('hidden');
-      document.getElementById('admin-password-input').value = "";
+    function requireExcelForEntry() {
+      if (excelConnected && connectedExcelHandle) return true;
+      alert('Please connect your local .xlsx file before adding or editing records.');
+      document.getElementById('excel-connect-panel').scrollIntoView({behavior:'smooth',block:'start'});
+      setExcelStatus('Connect a local Excel workbook before making entries.', true);
+      return false;
     }
 
     function initApp() {
