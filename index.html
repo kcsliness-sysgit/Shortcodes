@@ -292,7 +292,7 @@
     <h2 style="color:#17314a;">📂 Import / Connect Local Excel File</h2>
     <p style="margin:10px 0 16px;">Abhi connect nahi karna toh cancel kar sakte hain aur empty pages dekh sakte hain. Patient, OPD ya medicine entry ke liye local .xlsx file connect karni hogi.</p>
     <button class="btn" onclick="connectExcelFile()">📂 Import / Connect .xlsx File</button>
-    <label class="btn btn-secondary" style="margin-left:8px;cursor:pointer;">Choose Excel File <input id="first-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" onchange="importFirstExcelFile(event)"></label>
+    <label class="btn btn-secondary" style="margin-left:8px;cursor:pointer;">Import for viewing only <input id="first-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" onchange="importFirstExcelFile(event)"></label>
     <p id="excel-connection-status" role="status" style="margin-top:12px;color:#64748b;">No Excel file connected. You can browse empty pages.</p>
   </section>
   <!-- MAIN APP CONTAINER -->
@@ -823,6 +823,7 @@
     }
 
     function deletePatient(patId) {
+      if (!requireExcelForEntry()) return;
       const patient = clinicData.patients.find(p => String(p.id) === String(patId)); if (!patient) return;
       const count = (patient.visits || []).length;
       const total = (patient.visits || []).reduce((sum, v) => sum + (Number(v.totalFee ?? v.fee ?? 0) || 0), 0);
@@ -1097,6 +1098,7 @@
     }
 
     function deleteVisit(patId, visitIndex) {
+      if (!requireExcelForEntry()) return;
       if (confirm("Delete this OPD visit record?")) {
         const pat = clinicData.patients.find(p => p.id === patId);
         pat.visits.splice(visitIndex, 1);
@@ -1363,6 +1365,7 @@
     }
 
     function importBackupData(e) {
+      if (!requireExcelForEntry()) { e.target.value = ''; return; }
       const input = e.target;
       const file = input.files && input.files[0];
       if (!file) return;
