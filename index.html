@@ -424,17 +424,17 @@
       <div id="medicines-tab" class="tab-content card hidden" style="margin-top: 15px;">
         <h3>💊 Medicine Master Inventory & Backup Management</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-          <button class="btn" onclick="exportBackupData()">💾 Export Full Backup (JSON)</button>
+          <button class="btn" onclick="exportBackupData()">💾 Export Full Backup (.xlsx)</button>
           <label for="backup-import-mode" style="font-weight:600;">Import mode</label>
           <select id="backup-import-mode" style="max-width:220px;">
             <option value="merge" selected>Merge / Append (recommended)</option>
             <option value="replace">Replace current database</option>
           </select>
           <label class="btn btn-secondary" style="cursor:pointer;margin:0;">
-            📂 Choose Backup to Import <input type="file" id="import-file" accept=".json,application/json" style="display:none;" onchange="importBackupData(event)">
+            📂 Choose Excel Backup <input type="file" id="import-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none;" onchange="importBackupData(event)">
           </label>
         </div>
-        <p style="font-size:.85rem;color:#64748b;margin:0 0 18px;">Merge adds missing patients, visits and medicines without replacing existing records. Replace overwrites the current device database after confirmation. Export backups regularly and keep a copy somewhere safe.</p>
+        <p style="font-size:.85rem;color:#64748b;margin:0 0 18px;">Excel workbook contains separate Patients, Visits, Prescriptions, Medicines and extra-detail sheets. Merge adds missing records and skips duplicates. Replace overwrites the current device database after confirmation. Keep backups in a safe location.</p>
         <div id="backup-status" role="status" aria-live="polite" style="font-size:.9rem;margin-bottom:18px;"></div>
         <h4>Add New Medicine to Master Database</h4>
         <div class="form-grid" style="align-items: flex-end;">
@@ -635,6 +635,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
     const ADMIN_PASS = "doctor123";
 
@@ -1223,52 +1224,112 @@
         saveToStorage();
         renderMedicineInventory();
         document.getElementById('new-med-name').value = "";
-        document.getElementById('new-med-cat').value = "";
-        alert("Medicine added successfully!");
-      }
-    }
-
-    function setBackupStatus(message, isError = false) {
+        document.getElementById('ne    function setBackupStatus(message, isError = false) {
       const el = document.getElementById('backup-status');
       if (!el) return;
       el.textContent = message;
       el.style.color = isError ? 'var(--danger)' : 'var(--success)';
     }
 
+    function getXlsxLibrary() {
+      if (typeof XLSX === 'undefined') {
+        setBackupStatus("Excel support library could not load. Check internet connection and reload the page.", true);
+        return false;
+      }
+      return true;
+    }
+
+    function objectRows(rows) {
+      return rows.map(row => ({ ...row }));
+    }
+
     function exportBackupData() {
+      if (!getXlsxLibrary()) return;
       try {
-        const backup = {
-          app: "Dr Abhilash Skin Clinic",
-          format: "clinic-master-backup",
-          version: 1,
-          exportedAt: new Date().toISOString(),
-          data: clinicData
-        };
-        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `Clinic_Backup_${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        setBackupStatus("Backup exported. Keep this file in a safe location; exporting does not automatically upload it to Google Sheets.");
+        const wb = XLSX.utils.book_new();
+        const patients = (clinicData.patients || []).map(p => {
+          const row = { ...p };
+          delete row.visits;
+          return row;
+        });
+        const visits = [];
+        const prescriptions = [];
+        const extraFees = [];
+        const extraVitals = [];
+        const extraNotes = [];
+        (clinicData.patients || []).forEach(p => (p.visits || []).forEach((v, index) => {
+          const visitKey = String(v.id || v.token || `${p.id}::${v.date || ''}::${index}`);
+          const row = { patientId: p.id, visitKey, visitIndex: index, ...v };
+          delete row.rx; delete row.extraFees; delete row.extraVitals; delete row.extraNotes;
+          visits.push(row);
+          (v.rx || []).forEach((rx, rxIndex) => prescriptions.push({ patientId: p.id, visitKey, rxIndex, ...rx }));
+          (v.extraFees || []).forEach((item, itemIndex) => extraFees.push({ patientId: p.id, visitKey, itemIndex, ...item }));
+          (v.extraVitals || []).forEach((item, itemIndex) => extraVitals.push({ patientId: p.id, visitKey, itemIndex, ...item }));
+          (v.extraNotes || []).forEach((item, itemIndex) => extraNotes.push({ patientId: p.id, visitKey, itemIndex, ...item }));
+        }));
+        const sheets = [
+          ["Patients", patients],
+          ["Visits", visits],
+          ["Prescriptions", prescriptions],
+          ["ExtraFees", extraFees],
+          ["ExtraVitals", extraVitals],
+          ["ExtraNotes", extraNotes],
+          ["Medicines", objectRows(clinicData.medicines || [])],
+          ["BackupInfo", [{ app: "Dr Abhilash Skin Clinic", format: "clinic-xlsx-backup", version: 1, exportedAt: new Date().toISOString() }]]
+        ];
+        sheets.forEach(([name, rows]) => {
+          const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{}]);
+          XLSX.utils.book_append_sheet(wb, ws, name);
+        });
+        XLSX.writeFile(wb, `Clinic_Backup_${new Date().toISOString().slice(0,10)}.xlsx`);
+        setBackupStatus("Excel backup exported successfully. Workbook includes patients, visits, prescriptions, medicines and extra visit details.");
       } catch (err) {
-        setBackupStatus("Backup export failed: " + (err.message || "unknown error"), true);
+        setBackupStatus("Excel export failed: " + (err.message || "unknown error"), true);
       }
     }
 
-    function validateBackupData(candidate) {
-      if (!candidate || typeof candidate !== 'object') return null;
-      const data = candidate.data && typeof candidate.data === 'object' ? candidate.data : candidate;
-      if (!Array.isArray(data.patients) || !Array.isArray(data.medicines)) return null;
-      if (!data.patients.every(p => p && typeof p === 'object' && p.id != null && Array.isArray(p.visits || []))) return null;
-      if (!data.medicines.every(m => m && typeof m === 'object' && typeof m.name === 'string')) return null;
-      return {
-        patients: data.patients.map(p => ({ ...p, visits: Array.isArray(p.visits) ? p.visits : [] })),
-        medicines: data.medicines.map(m => ({ ...m }))
-      };
+    function xlsxCellValue(value) {
+      if (value === undefined || value === null) return "";
+      return value;
+    }
+
+    function validateXlsxWorkbook(wb) {
+      if (!wb || !Array.isArray(wb.SheetNames) || !wb.SheetNames.includes("Patients") || !wb.SheetNames.includes("Medicines")) return null;
+      const readRows = name => wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: "", raw: false }) : [];
+      const patients = readRows("Patients").filter(p => p.id !== undefined && String(p.id).trim() !== "").map(p => ({ ...p, visits: [] }));
+      const visitRows = readRows("Visits");
+      const rxRows = readRows("Prescriptions");
+      const feeRows = readRows("ExtraFees");
+      const vitalRows = readRows("ExtraVitals");
+      const noteRows = readRows("ExtraNotes");
+      const medicines = readRows("Medicines").filter(m => typeof m.name === "string" && m.name.trim() !== "");
+      if (!patients.length && !medicines.length && !visitRows.length) return null;
+
+      const patientById = new Map(patients.map(p => [String(p.id), p]));
+      const visitByKey = new Map();
+      visitRows.forEach(row => {
+        const patient = patientById.get(String(row.patientId));
+        if (!patient) return;
+        const visitKey = String(row.visitKey || row.token || `${row.patientId}::${row.date || ''}::${row.visitIndex || 0}`);
+        const visit = { ...row };
+        delete visit.patientId; delete visit.visitKey; delete visit.visitIndex;
+        visit.rx = []; visit.extraFees = []; visit.extraVitals = []; visit.extraNotes = [];
+        patient.visits.push(visit);
+        visitByKey.set(visitKey, visit);
+      });
+      const attachRows = (rows, target, fieldsToRemove) => rows.forEach(row => {
+        const visit = visitByKey.get(String(row.visitKey));
+        if (!visit) return;
+        const item = { ...row };
+        fieldsToRemove.forEach(k => delete item[k]);
+        visit[target].push(item);
+      });
+      attachRows(rxRows, "rx", ["patientId","visitKey","rxIndex"]);
+      attachRows(feeRows, "extraFees", ["patientId","visitKey","itemIndex"]);
+      attachRows(vitalRows, "extraVitals", ["patientId","visitKey","itemIndex"]);
+      attachRows(noteRows, "extraNotes", ["patientId","visitKey","itemIndex"]);
+      patients.forEach(p => p.visits.sort((a,b) => String(a.date||"").localeCompare(String(b.date||""))));
+      return { patients, medicines };
     }
 
     function mergeBackupData(current, incoming) {
@@ -1279,6 +1340,7 @@
       };
       let addedPatients = 0, addedVisits = 0, addedMedicines = 0, skippedDuplicates = 0;
       const patientById = new Map(merged.patients.map(p => [String(p.id), p]));
+      const visitIdentity = v => String(v.id || v.token || `${v.date||''}|${v.symptoms||''}|${v.age||''}`);
 
       incoming.patients.forEach(incomingPatient => {
         const key = String(incomingPatient.id);
@@ -1291,33 +1353,24 @@
           addedVisits += copied.visits.length;
           return;
         }
-
-        const knownVisitKeys = new Set((existing.visits || []).map((v, i) =>
-          String(v.id || v.token || (v.date ? `${v.date}|${v.symptoms || ''}|${i}` : JSON.stringify(v)))
-        ));
-        (incomingPatient.visits || []).forEach((visit, index) => {
-          const visitKey = String(visit.id || visit.token || (visit.date ? `${visit.date}|${visit.symptoms || ''}|${index}` : JSON.stringify(visit)));
-          if (!knownVisitKeys.has(visitKey)) {
+        const known = new Set((existing.visits || []).map(visitIdentity));
+        (incomingPatient.visits || []).forEach(visit => {
+          const visitKey = visitIdentity(visit);
+          if (!known.has(visitKey)) {
             existing.visits.push({ ...visit });
-            knownVisitKeys.add(visitKey);
+            known.add(visitKey);
             addedVisits++;
-          } else {
-            skippedDuplicates++;
-          }
+          } else skippedDuplicates++;
         });
-        // Keep existing patient profile fields to avoid silently overwriting newer local edits.
       });
-
-      const knownMedicineNames = new Set(merged.medicines.map(m => String(m.name).trim().toLowerCase()));
-      incoming.medicines.forEach(medicine => {
-        const key = String(medicine.name).trim().toLowerCase();
-        if (!knownMedicineNames.has(key)) {
-          merged.medicines.push({ ...medicine });
-          knownMedicineNames.add(key);
+      const medicineNames = new Set(merged.medicines.map(m => String(m.name).trim().toLowerCase()));
+      incoming.medicines.forEach(m => {
+        const key = String(m.name).trim().toLowerCase();
+        if (!medicineNames.has(key)) {
+          merged.medicines.push({ ...m });
+          medicineNames.add(key);
           addedMedicines++;
-        } else {
-          skippedDuplicates++;
-        }
+        } else skippedDuplicates++;
       });
       return { data: merged, addedPatients, addedVisits, addedMedicines, skippedDuplicates };
     }
@@ -1326,38 +1379,45 @@
       const input = e.target;
       const file = input.files && input.files[0];
       if (!file) return;
+      if (!getXlsxLibrary()) { input.value = ""; return; }
       const reader = new FileReader();
       reader.onload = function(event) {
         const originalData = clinicData;
         try {
-          const parsed = JSON.parse(event.target.result);
-          const imported = validateBackupData(parsed);
+          const wb = XLSX.read(event.target.result, { type: "array" });
+          const imported = validateXlsxWorkbook(wb);
           if (!imported) {
-            setBackupStatus("This file is not a valid clinic backup. No data was changed.", true);
+            setBackupStatus("This is not a valid Clinic Excel backup. Required sheets: Patients and Medicines. No data changed.", true);
             return;
           }
-
           const mode = document.getElementById('backup-import-mode')?.value || 'merge';
           if (mode === 'replace') {
-            if (!confirm(`Replace the current database with ${imported.patients.length} patient profiles and ${imported.medicines.length} medicines? Current local data will be overwritten. Export a backup first if you need it.`)) {
+            if (!confirm(`Replace current database with ${imported.patients.length} patient profiles and ${imported.medicines.length} medicines? Current local data will be overwritten. Export a backup first.`)) {
               setBackupStatus("Import cancelled. Current data was not changed.");
               return;
             }
             clinicData = imported;
             saveToStorage();
             renderMedicineInventory();
-            setBackupStatus(`Database replaced successfully: ${clinicData.patients.length} patients and ${clinicData.medicines.length} medicines imported.`);
+            setBackupStatus(`Database replaced: ${clinicData.patients.length} patients and ${clinicData.medicines.length} medicines imported.`);
           } else {
             const result = mergeBackupData(clinicData, imported);
             clinicData = result.data;
             saveToStorage();
             renderMedicineInventory();
-            setBackupStatus(`Merge complete. Added ${result.addedPatients} patients, ${result.addedVisits} visits and ${result.addedMedicines} medicines. Skipped ${result.skippedDuplicates} duplicates. Existing patient profile fields were kept.`);
+            setBackupStatus(`Merge complete: added ${result.addedPatients} patients, ${result.addedVisits} visits and ${result.addedMedicines} medicines; skipped ${result.skippedDuplicates} duplicates.`);
           }
         } catch (err) {
           clinicData = originalData;
-          setBackupStatus("Import failed. Check the file and available browser storage, then try again. No successful import was confirmed.", true);
+          setBackupStatus("Excel import failed. Check workbook format and try again. " + (err.message || ""), true);
         } finally {
+          input.value = "";
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+
           input.value = "";
         }
       };
