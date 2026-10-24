@@ -74,7 +74,9 @@
     @media(max-width:700px){header{padding:14px;align-items:flex-start;gap:12px;flex-direction:column}header h2{font-size:1.15rem}.container{margin:12px auto;padding:0 10px}.card{padding:15px;border-radius:10px}.nav-tabs{margin-top:10px;gap:5px;padding:5px}.tab-btn{padding:9px 11px;font-size:.82rem}.form-grid{grid-template-columns:1fr;gap:12px}.patient-list-item{align-items:flex-start;flex-direction:column;gap:8px}.patient-list-item .btn{width:100%}#search-input{min-width:0}.rx-row{grid-template-columns:1fr 1fr}.rx-row .rx-med-name{grid-column:1/-1}.dynamic-field-row{grid-template-columns:1fr}table{display:block;overflow-x:auto;white-space:nowrap}#auth-wrapper{padding:16px;align-items:flex-start;padding-top:12vh}.login-card{padding:clamp(22px,5vw,34px);max-width:440px}.login-card h2{font-size:1.25rem}}
 
     .pdf-export-layout { display:block !important; width:180mm !important; min-height:267mm !important; box-sizing:border-box !important; background:#fff !important; color:#111 !important; font-family:Arial,sans-serif !important; font-size:10pt !important; position:relative !important; overflow:visible !important; }
-    .pdf-export-layout .prescription-top-blank { height:52mm; }
+    .pdf-export-layout .prescription-letterhead { text-align:center; border-bottom:1px solid #777; padding:4mm 0 5mm; margin-bottom:4mm; }
+    .pdf-export-layout .prescription-letterhead h2 { font-size:17pt; margin-bottom:2mm; }
+    .pdf-export-layout .prescription-doctor-signature { position:absolute; right:0; bottom:27mm; width:62mm; text-align:center; font-size:9pt; line-height:1.45; }
     .pdf-export-layout .prescription-patient-grid { display:flex; justify-content:space-between; align-items:flex-start; gap:10mm; font-size:10pt; border-bottom:1px solid #777; padding:4mm 0; }
     .pdf-export-layout .prescription-patient-grid > div { width:50%; }
     .pdf-export-layout .prescription-vitals-list { display:flex; flex-direction:column; align-items:flex-end; gap:2mm; margin-top:2mm; text-align:right; }
@@ -83,7 +85,7 @@
     .pdf-export-layout .prescription-rx-table,.pdf-export-layout .invoice-table { width:100%; border-collapse:collapse; margin-top:4mm; font-size:9.5pt; }
     .pdf-export-layout .prescription-rx-table th,.pdf-export-layout .prescription-rx-table td,.pdf-export-layout .invoice-table th,.pdf-export-layout .invoice-table td { border:1px solid #888; padding:3mm 2.5mm; text-align:left; white-space:normal; }
     .pdf-export-layout .prescription-doctor-note { margin-top:7mm; font-size:10pt; line-height:1.5; }
-    .pdf-export-layout .prescription-print { padding-bottom:27mm !important; }
+    .pdf-export-layout .prescription-print { padding-bottom:45mm !important; }
     .pdf-export-layout .prescription-rx-table th,.pdf-export-layout .prescription-rx-table td { border:1px solid #888 !important; }
     .pdf-export-layout .prescription-rx-table { border:1px solid #888; border-bottom:1px solid #888; }
     .pdf-export-layout .invoice-print { position:relative; min-height:267mm; padding-top:15mm; padding-bottom:40mm; }
@@ -109,7 +111,9 @@
       body.printing-invoice #printable-invoice * { visibility:visible !important; }
       body.printing-prescription #printable-prescription .hidden,
       body.printing-invoice #printable-invoice .hidden { display:none !important; }
-      .prescription-top-blank { height:52mm; }
+      .prescription-letterhead { text-align:center; border-bottom:1px solid #777; padding:4mm 0 5mm; margin-bottom:4mm; }
+      .prescription-letterhead h2 { font-size:17pt; margin-bottom:2mm; }
+      .prescription-doctor-signature { position:absolute; right:15mm; bottom:27mm; width:62mm; text-align:center; font-size:9pt; line-height:1.45; }
       .prescription-patient-grid { display:flex; justify-content:space-between; align-items:flex-start; gap:12mm; font-size:11pt; border-bottom:1px solid #777; padding:4mm 0; }
       .prescription-patient-grid > div { width:50%; }
       .prescription-vitals-list { display:flex; flex-direction:column; align-items:flex-end; gap:2mm; margin-top:2mm; text-align:right; }
@@ -122,7 +126,7 @@
       .prescription-rx-table th,.prescription-rx-table td,.invoice-table th,.invoice-table td { border:1px solid #888; padding:3mm 2.5mm; text-align:left; white-space:normal; }
       .prescription-rx-table th,.invoice-table thead th { background:#f0f0f0 !important; }
       .prescription-doctor-note { margin-top:7mm; font-size:10.5pt; line-height:1.5; }
-      body.printing-prescription #printable-prescription { padding-bottom:27mm !important; }
+      body.printing-prescription #printable-prescription { padding-bottom:45mm !important; }
       .prescription-rx-table { border:1px solid #888; }
       .prescription-rx-table th,.prescription-rx-table td { border:1px solid #888 !important; }
       .signature-line { width:52mm; border-top:1px solid #333; margin:0 auto 2mm; }
@@ -629,14 +633,15 @@
   <datalist id="medicines-datalist"></datalist>
 
   <div id="printable-prescription" class="hidden print-document prescription-print">
-    <div class="prescription-top-blank" aria-hidden="true"></div>
+    <div class="prescription-letterhead"><h2>डॉ. अभिलाष स्किन क्लिनिक</h2><div>Dr. Abhilash A. Sondarkar · B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</div><div>Reg. No.: 65170</div></div>
     <div class="prescription-patient-grid">
       <div><strong>Patient Name:</strong> <span id="print-name"></span><div style="margin-top:8px;"><strong>Age:</strong> <span id="print-age-gender"></span></div></div>
       <div style="text-align:right;"><strong>Date:</strong> <span id="print-date"></span><div style="margin-top:8px;"><strong>Vitals:</strong></div><div id="print-vitals-list" class="prescription-vitals-list"></div></div>
     </div>
     <div class="prescription-center-title">PRESCRIPTION</div>
-    <table class="prescription-rx-table"><thead><tr><th>Medicine Name</th><th>Dosage</th><th>Timing</th><th>Duration</th></tr></thead><tbody id="print-rx-tbody"></tbody></table>
+    <table class="prescription-rx-table"><thead><tr><th>Medicine Name</th><th>Route</th><th>Dosage</th><th>Timing</th><th>Duration</th></tr></thead><tbody id="print-rx-tbody"></tbody></table>
     <div id="print-notes-section" class="prescription-doctor-note"><strong>Doctor's Note / Advice:</strong><div id="print-notes" style="white-space:pre-wrap;margin-top:6px;"></div></div>
+    <div class="prescription-doctor-signature"><div style="height:10mm;"></div><div style="border-top:1px solid #333;margin-bottom:2mm;"></div><strong>Dr. Abhilash A. Sondarkar</strong><div>B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</div><div>Reg. No.: 65170</div></div>
     <span id="print-token" class="hidden"></span><span id="print-pat-id" class="hidden"></span><span id="print-mob" class="hidden"></span><span id="print-fee" class="hidden"></span>
   </div>
   <div id="printable-invoice" class="hidden print-document invoice-print">
@@ -1073,10 +1078,12 @@
     }
 
     function rxRowMarkup(item={}) {
-      const dose=String(item.dose||''),timing=String(item.timing||''),duration=String(item.duration||'');
+      const dose=String(item.dose||''),timing=String(item.timing||''),duration=String(item.duration||''),route=String(item.route||'Oral PO');
       const doses=['1-0-1','1-1-1','1-0-0','0-0-1','0-1-0','1-1-0','1-0-½','½-0-½','SOS','As directed'],times=['After Meal','Before Meal','With Meal','Empty Stomach','Any Time'];
       const kd=doses.includes(dose),kt=times.includes(timing),dm=duration.match(/^(\d+)\s*(Days?|Weeks?|Every month)$/i),unit=dm?(dm[2].toLowerCase().startsWith('day')?'Days':dm[2].toLowerCase().startsWith('week')?'Weeks':'Every month'):(['EveryDay','Regular'].includes(duration)?duration:'Days'),num=dm?dm[1]:'';
+      const routes=['Oral PO','Intravenous IV','Intramuscular IM','Subcutaneous SC','Per rectal PR','Per vaginal PV','Nasal','Inhalation','Topical','Ophthalmic','Otic','Sublingual SL','Buccal','Other / Custom'];
       return `<div class="rx-row"><input type="text" class="rx-med-name" list="medicines-datalist" autocomplete="off" value="${escapeAttr(item.med||'')}" placeholder="Type medicine name...">
+      <div><select class="rx-route-select">${routes.map(x=>`<option ${x===route?'selected':''}>${x}</option>`).join('')}<option value="__custom__" ${!routes.includes(route)?'selected':''}>Custom…</option></select><input class="rx-route-custom ${routes.includes(route)?'hidden':''}" value="${escapeAttr(routes.includes(route)?'':route)}" placeholder="Custom route"></div>
       <div><select class="rx-dose-select" onchange="toggleRxCustom(this,'dose')">${doses.map(x=>`<option ${x===dose?'selected':''}>${x}</option>`).join('')}<option value="__custom__" ${!kd&&dose?'selected':''}>Custom…</option></select><input class="rx-dose-custom ${kd||!dose?'hidden':''}" value="${escapeAttr(kd?'':dose)}" placeholder="Custom dosage"></div>
       <div><select class="rx-timing-select" onchange="toggleRxCustom(this,'timing')">${times.map(x=>`<option ${x===timing?'selected':''}>${x}</option>`).join('')}<option value="__custom__" ${!kt&&timing?'selected':''}>Custom…</option></select><input class="rx-timing-custom ${kt||!timing?'hidden':''}" value="${escapeAttr(kt?'':timing)}" placeholder="Custom timing"></div>
       <div><div class="custom-inline"><input type="number" class="rx-duration-number ${['EveryDay','Regular'].includes(unit)?'hidden':''}" min="1" value="${escapeAttr(num)}" placeholder="No."><select class="rx-duration-unit" onchange="toggleDurationNumber(this)"><option ${unit==='Days'?'selected':''}>Days</option><option ${unit==='Weeks'?'selected':''}>Weeks</option><option ${unit==='Every month'?'selected':''}>Every month</option><option ${unit==='EveryDay'?'selected':''}>EveryDay</option><option ${unit==='Regular'?'selected':''}>Regular</option></select></div></div><button type="button" class="btn btn-danger" onclick="removeRxRow(this)" style="padding:10px;">×</button></div>`;
@@ -1143,7 +1150,9 @@
         const duration = getRxDuration(row);
 
         if (medName) {
-          rxList.push({ med: medName, dose, timing, duration });
+          const routeSelect=row.querySelector('.rx-route-select'),routeCustom=row.querySelector('.rx-route-custom');
+          const route=routeSelect.value==='__custom__'?routeCustom.value.trim():routeSelect.value;
+          rxList.push({ med: medName, route, dose, timing, duration });
           if (!clinicData.medicines.some(m => m.name.toLowerCase() === medName.toLowerCase())) {
             clinicData.medicines.push({ name: medName, category: "Custom Prescribed" });
           }
@@ -1359,10 +1368,11 @@
       visit.rx.forEach(item => {
         tbody.innerHTML += `
           <tr>
-            <td style="padding: 6px; border-bottom: 1px solid #eee;"><strong>${item.med}</strong></td>
-            <td style="padding: 6px; border-bottom: 1px solid #eee;">${item.dose}</td>
-            <td style="padding: 6px; border-bottom: 1px solid #eee;">${item.timing}</td>
-            <td style="padding: 6px; border-bottom: 1px solid #eee;">${item.duration}</td>
+            <td style="padding: 6px; border: 1px solid #888;"><strong>${escapeAttr(item.med)}</strong></td>
+            <td style="padding: 6px; border: 1px solid #888;">${escapeAttr(item.route||'Oral PO')}</td>
+            <td style="padding: 6px; border: 1px solid #888;">${escapeAttr(item.dose)}</td>
+            <td style="padding: 6px; border: 1px solid #888;">${escapeAttr(item.timing)}</td>
+            <td style="padding: 6px; border: 1px solid #888;">${escapeAttr(item.duration)}</td>
           </tr>
         `;
       });
