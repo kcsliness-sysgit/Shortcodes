@@ -86,8 +86,12 @@
       body.printing-prescription #printable-prescription .hidden,
       body.printing-invoice #printable-invoice .hidden { display:none !important; }
       .prescription-top-blank { height:52mm; }
-      .prescription-patient-grid { display:flex; justify-content:space-between; gap:12mm; font-size:11pt; border-bottom:1px solid #777; padding:4mm 0; }
+      .prescription-patient-grid { display:flex; justify-content:space-between; align-items:flex-start; gap:12mm; font-size:11pt; border-bottom:1px solid #777; padding:4mm 0; }
       .prescription-patient-grid > div { width:50%; }
+      .prescription-vitals-list { display:flex; flex-direction:column; align-items:flex-end; gap:2mm; margin-top:2mm; text-align:right; }
+      .prescription-vital-row { display:flex; justify-content:flex-end; gap:3mm; width:100%; }
+      .prescription-vital-row strong { font-weight:700; }
+      .prescription-vital-row span { overflow-wrap:anywhere; }
       .prescription-center-title { text-align:center; font-weight:800; font-size:14pt; margin:7mm 0 5mm; letter-spacing:1px; }
       .prescription-clinical-info { font-size:10.5pt; line-height:1.5; margin-bottom:5mm; }
       .prescription-rx-table,.invoice-table { width:100%; border-collapse:collapse; margin-top:4mm; font-size:10.5pt; }
@@ -97,13 +101,14 @@
       .prescription-signature-reserved { position:absolute; bottom:7mm; right:15mm; width:62mm; height:24mm; }
       .prescription-signature-block { text-align:center; font-size:8.5pt; line-height:1.35; }
       .signature-line { width:52mm; border-top:1px solid #333; margin:0 auto 2mm; }
-      .invoice-print { padding-top:15mm !important; }
+      .invoice-print { position:relative !important; min-height:267mm !important; padding-top:15mm !important; padding-bottom:40mm !important; }
       .invoice-heading { text-align:center; padding-bottom:7mm; border-bottom:2px solid #333; }
       .invoice-heading h1 { font-size:20pt; margin:0 0 2mm; }
       .invoice-heading h2 { font-size:15pt; margin:7mm 0 0; }
       .invoice-patient-details { display:grid; grid-template-columns:1fr 1fr; gap:4mm 10mm; margin:9mm 0; font-size:11pt; }
       .invoice-table tfoot th { font-size:12pt; }
-      .invoice-footer { display:flex; justify-content:space-between; align-items:flex-end; margin-top:20mm; font-size:10pt; }
+      .invoice-footer { position:absolute !important; right:0 !important; bottom:0 !important; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-end; gap:5mm; margin:0 !important; width:100%; font-size:10pt; text-align:right; }
+      .invoice-thank-you { text-align:right; }
       .invoice-signature { text-align:center; min-width:62mm; line-height:1.5; }
       .no-print { display:none !important; }
     }
@@ -602,10 +607,9 @@
     <div class="prescription-top-blank" aria-hidden="true"></div>
     <div class="prescription-patient-grid">
       <div><strong>Patient Name:</strong> <span id="print-name"></span><div style="margin-top:8px;"><strong>Age:</strong> <span id="print-age-gender"></span></div></div>
-      <div style="text-align:right;"><strong>Date:</strong> <span id="print-date"></span><div style="margin-top:8px;"><strong>Vitals:</strong> <span id="print-vitals"></span></div></div>
+      <div style="text-align:right;"><strong>Date:</strong> <span id="print-date"></span><div style="margin-top:8px;"><strong>Vitals:</strong></div><div id="print-vitals-list" class="prescription-vitals-list"></div></div>
     </div>
     <div class="prescription-center-title">PRESCRIPTION</div>
-    <div class="prescription-clinical-info"><div><strong>Chief Complaints:</strong> <span id="print-symptoms"></span></div><div id="print-history-row" style="margin-top:7px;"><strong>History / Onset:</strong> <span id="print-history-details"></span></div></div>
     <table class="prescription-rx-table"><thead><tr><th>Medicine Name</th><th>Dosage</th><th>Timing</th><th>Duration</th></tr></thead><tbody id="print-rx-tbody"></tbody></table>
     <div id="print-notes-section" class="prescription-doctor-note"><strong>Doctor's Note / Advice:</strong><div id="print-notes" style="white-space:pre-wrap;margin-top:6px;"></div></div>
     <div class="prescription-signature-reserved"><div class="prescription-signature-block"><div class="signature-line"></div><strong>Dr. Abhilash A. Sondarkar</strong><div>B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</div><div>Reg. No.: 65170</div></div></div>
@@ -613,9 +617,9 @@
   </div>
   <div id="printable-invoice" class="hidden print-document invoice-print">
     <div class="invoice-heading"><h1>डॉ. अभिलाष स्किन क्लिनिक</h1><div>Dr. Abhilash A. Sondarkar · B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</div><div>Reg. No.: 65170</div><h2>INVOICE / OPD BILL</h2></div>
-    <div class="invoice-patient-details"><div><strong>Patient Name:</strong> <span id="invoice-patient-name"></span></div><div><strong>Patient ID:</strong> <span id="invoice-patient-id"></span></div><div><strong>OPD Token:</strong> <span id="invoice-token"></span></div><div><strong>Date:</strong> <span id="invoice-date"></span></div><div><strong>Age:</strong> <span id="invoice-age"></span></div><div><strong>Mobile:</strong> <span id="invoice-mobile"></span></div></div>
+    <div class="invoice-patient-details"><div><strong>Patient Name:</strong> <span id="invoice-patient-name"></span></div><div><strong>Patient ID:</strong> <span id="invoice-patient-id"></span></div><div><strong>Date:</strong> <span id="invoice-date"></span></div><div><strong>Age:</strong> <span id="invoice-age"></span></div><div><strong>Mobile:</strong> <span id="invoice-mobile"></span></div></div>
     <table class="invoice-table"><thead><tr><th>Description</th><th style="text-align:right;">Amount (₹)</th></tr></thead><tbody id="invoice-fees-tbody"></tbody><tfoot><tr><th>Total</th><th style="text-align:right;">₹<span id="invoice-total"></span></th></tr></tfoot></table>
-    <div class="invoice-footer"><span>Thank you for visiting our clinic.</span><div class="invoice-signature"><div class="signature-line"></div><strong>Authorized Signature</strong><br>Dr. Abhilash A. Sondarkar<br>Reg. No.: 65170</div></div>
+    <div class="invoice-footer"><div class="invoice-thank-you">Thank you for visiting our clinic.</div><div class="invoice-signature"><div class="signature-line"></div><strong>Authorized Signature</strong><br>Dr. Abhilash A. Sondarkar<br>Reg. No.: 65170</div></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1272,7 +1276,6 @@
     function triggerPrintInvoice(patient, visit, outputMode = 'print') {
       document.getElementById('invoice-patient-name').innerText=patient.name || '';
       document.getElementById('invoice-patient-id').innerText=patient.id || '';
-      document.getElementById('invoice-token').innerText=visit.token || '';
       document.getElementById('invoice-date').innerText=visit.date || '';
       const age=visit.age ?? patient.age;
       document.getElementById('invoice-age').innerText=age!==undefined && age!==null && age!=='' ? String(age)+' years' : '—';
@@ -1301,12 +1304,18 @@
       const visitAge = visit.age ?? patient.age;
       document.getElementById('print-age-gender').innerText = `${visitAge !== undefined && visitAge !== null && visitAge !== "" ? `${visitAge} Yrs` : "Age not recorded"} / ${patient.gender}`;
       document.getElementById('print-mob').innerText = patient.mobile;
-      document.getElementById('print-symptoms').innerText = visit.symptoms;
-      document.getElementById('print-vitals').innerText = visit.vitals;
       document.getElementById('print-fee').innerText = visit.totalFee ?? visit.fee;
-      const clinicalDetails=[visit.history?'History: '+visit.history:'',visit.onset?'Onset: '+visit.onset:'',visit.onsetDuration?'Duration: '+visit.onsetDuration:'',visit.onsetPattern?'Pattern: '+visit.onsetPattern:'',...(visit.extraNotes||[]).map(n=>n.title+': '+n.value)].filter(Boolean).join(' | ');
-      const printHistory=document.getElementById('print-history-details'); if(printHistory)printHistory.innerText=clinicalDetails;
-      const historyRow=document.getElementById('print-history-row'); if(historyRow)historyRow.style.display=clinicalDetails?'block':'none';
+      const vitalsContainer=document.getElementById('print-vitals-list');
+      const vitalEntries=[];
+      const addVital=(label,value)=>{if(value!==undefined&&value!==null&&String(value).trim()!=='')vitalEntries.push({label,value:String(value).trim()});};
+      addVital('Weight',visit.weight);
+      addVital('BP',visit.bp);
+      addVital('Pulse',visit.pulse);
+      addVital('Vitals',visit.vitals);
+      (Array.isArray(visit.extraVitals)?visit.extraVitals:[]).forEach(v=>addVital(v.title,v.value));
+      const uniqueVitals=[]; const seenVitals=new Set();
+      vitalEntries.forEach(v=>{const key=v.label+':'+v.value;if(!seenVitals.has(key)){seenVitals.add(key);uniqueVitals.push(v);}});
+      vitalsContainer.innerHTML=uniqueVitals.length?uniqueVitals.map(v=>'<div class="prescription-vital-row"><strong>'+String(v.label).replace(/&/g,'&amp;').replace(/</g,'&lt;')+':</strong><span>'+String(v.value).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span></div>').join(''):'<div class="prescription-vital-row"><span>Not recorded</span></div>';
 
       if (visit.notes) {
         document.getElementById('print-notes').innerText = visit.notes;
