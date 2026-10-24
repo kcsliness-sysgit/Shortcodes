@@ -1212,10 +1212,11 @@
       document.addEventListener('visibilitychange',onVisibilityChange);
       window.addEventListener('focus',onWindowFocus);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        printStarted=true;
-        window.print();
-        // Do not use a fixed timeout here: Android Chrome may return from print()
-        // before its preview has rendered, which can hide the document too early.
+        // Give mobile browsers a brief paint window after the print layout is applied.
+        setTimeout(()=>{
+          printStarted=true;
+          window.print();
+        },250);
       }));
     }
     function triggerPrintInvoice(patient, visit) {
