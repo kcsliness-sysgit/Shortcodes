@@ -1423,12 +1423,6 @@
     }
 
 
-          input.value = "";
-        }
-      };
-      reader.readAsText(file);
-    }
-
     function parseReportDate(value) {
       if (!value) return null;
       const parts = String(value).slice(0, 10).split('-').map(Number);
