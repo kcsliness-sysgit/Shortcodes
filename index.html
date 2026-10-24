@@ -291,8 +291,9 @@
   <section id="excel-connect-panel" class="card" style="max-width:760px;margin:24px auto;padding:24px;">
     <h2 style="color:#17314a;">📂 Import / Connect Local Excel File</h2>
     <p style="margin:10px 0 16px;">Abhi connect nahi karna toh cancel kar sakte hain aur empty pages dekh sakte hain. Patient, OPD ya medicine entry ke liye local .xlsx file connect karni hogi.</p>
-    <button class="btn" onclick="connectExcelFile()">📂 Import / Connect .xlsx File</button>
-    <label class="btn btn-secondary" style="margin-left:8px;cursor:pointer;">Import for viewing only <input id="first-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" onchange="importFirstExcelFile(event)"></label>
+    <button id="excel-connect-button" class="btn" onclick="connectExcelFile()">📂 Connect .xlsx File</button>
+    <button id="excel-reconnect-button" class="btn hidden" onclick="reconnectExcelFile()">🔄 Reconnect remembered file</button>
+    <label id="excel-view-import-label" class="btn btn-secondary" style="margin-left:8px;cursor:pointer;">Import for viewing only <input id="first-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" onchange="importFirstExcelFile(event)"></label>
     <p id="excel-connection-status" role="status" style="margin-top:12px;color:#64748b;">No Excel file connected. You can browse empty pages.</p>
   </section>
   <!-- MAIN APP CONTAINER -->
@@ -667,6 +668,17 @@
     function setExcelStatus(message, isError = false) {
       ['excel-connection-status','excel-inline-status'].forEach(id => { const el = document.getElementById(id); if (el) { el.textContent = message; el.style.color = isError ? 'var(--danger)' : 'var(--success)'; } });
     }
+    function setExcelPanelMode(mode) {
+      const panel=document.getElementById('excel-connect-panel');
+      const connect=document.getElementById('excel-connect-button');
+      const reconnect=document.getElementById('excel-reconnect-button');
+      const viewImport=document.getElementById('excel-view-import-label');
+      if (!panel) return;
+      panel.classList.toggle('hidden', mode==='connected');
+      if (connect) connect.classList.toggle('hidden', mode==='reconnect');
+      if (reconnect) reconnect.classList.toggle('hidden', mode!=='reconnect');
+      if (viewImport) viewImport.classList.toggle('hidden', mode==='reconnect');
+    }
     function openHandleDB() { return new Promise((resolve,reject) => { const req=indexedDB.open('clinic_excel_connection_db',1); req.onupgradeneeded=()=>req.result.createObjectStore('handles'); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }
     async function saveExcelHandle(handle) { const db=await openHandleDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('handles','readwrite'); tx.objectStore('handles').put(handle,'master-workbook'); tx.oncomplete=()=>{db.close();resolve();}; tx.onerror=()=>{db.close();reject(tx.error);}; }); }
     async function loadExcelHandle() { const db=await openHandleDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('handles','readonly'); const req=tx.objectStore('handles').get('master-workbook'); req.onsuccess=()=>{db.close();resolve(req.result||null);}; req.onerror=()=>{db.close();reject(req.error);}; }); }
@@ -679,13 +691,44 @@
         const file=await handle.getFile(); const wb=XLSX.read(await file.arrayBuffer(),{type:'array'}); const data=validateXlsxWorkbook(wb);
         if(!data) { setExcelStatus('This workbook needs Patients and Medicines sheets in the clinic backup format. No data changed.',true); return; }
         connectedExcelHandle=handle; await saveExcelHandle(handle); clinicData=data; excelConnected=true; activePatient=null; initApp();
-        setExcelStatus('Connected: '+file.name+'. Changes will save to this workbook. Browser may ask permission again if site data is cleared.');
+        setExcelPanelMode('connected');
+        setExcelStatus('Connected: '+file.name+'. Changes save to this workbook.');
+
       } catch(err) { if(err && err.name==='AbortError') return; setExcelStatus('Could not connect Excel: '+(err.message||'unknown error'),true); }
     }
+    async function reconnectExcelFile() {
+      try {
+        let handle=connectedExcelHandle || await loadExcelHandle();
+        if (!handle) {
+          setExcelPanelMode('connect');
+          setExcelStatus('Remembered file connection is unavailable. Please choose the .xlsx file again.',true);
+          return;
+        }
+        if (!(await excelPermission(handle,true))) {
+          setExcelPanelMode('reconnect');
+          setExcelStatus('Permission was not granted. Tap Reconnect remembered file to try again.',true);
+          return;
+        }
+        const file=await handle.getFile();
+        const data=validateXlsxWorkbook(XLSX.read(await file.arrayBuffer(),{type:'array'}));
+        if (!data) {
+          setExcelPanelMode('reconnect');
+          setExcelStatus('Remembered file is not in the expected clinic format. Connect the correct workbook.',true);
+          return;
+        }
+        connectedExcelHandle=handle; await saveExcelHandle(handle); clinicData=data; excelConnected=true; activePatient=null; initApp();
+        setExcelPanelMode('connected');
+        setExcelStatus('Reconnected: '+file.name+'. Changes save to this workbook.');
+      } catch(err) {
+        setExcelPanelMode('reconnect');
+        setExcelStatus('Reconnect failed: '+(err.message||'unknown error'),true);
+      }
+    }
+
     async function importFirstExcelFile(e) {
       const input=e.target, file=input.files && input.files[0]; if(!file) return;
       try { const wb=XLSX.read(await file.arrayBuffer(),{type:'array'}); const data=validateXlsxWorkbook(wb); if(!data) { setExcelStatus('Invalid clinic workbook. Required sheets: Patients and Medicines.',true); return; }
-        clinicData=data; excelConnected=false; connectedExcelHandle=null; initApp(); setExcelStatus('Imported '+file.name+' for this page only. This browser cannot retain the connection; reconnect after reload before editing.',true);
+        clinicData=data; excelConnected=false; connectedExcelHandle=null; initApp(); setExcelPanelMode('connect'); setExcelStatus('Imported '+file.name+' for viewing only. Connect the workbook before editing.',true);
       } catch(err) { setExcelStatus('Import failed: '+(err.message||'unknown error'),true); } finally { input.value=''; }
     }
     function buildClinicWorkbook() {
@@ -705,11 +748,18 @@
     async function writeConnectedWorkbook() { if(!excelConnected||!connectedExcelHandle) return; const wb=buildClinicWorkbook(); const bytes=XLSX.write(wb,{bookType:'xlsx',type:'array'}); const writable=await connectedExcelHandle.createWritable(); await writable.write(bytes); await writable.close(); }
     async function restoreExcelConnection() {
       try { const handle=await loadExcelHandle(); if(!handle) return; connectedExcelHandle=handle;
-        if(!(await excelPermission(handle,false))) { setExcelStatus('Excel connection remembered, but permission needs renewal. Click Connect / Reconnect Excel.',true); return; }
+        if(!(await excelPermission(handle,false))) {
+          setExcelPanelMode('reconnect');
+          setExcelStatus('Excel file is remembered, but browser permission needs renewal. Tap Reconnect remembered file.',true);
+          return;
+        }
         const file=await handle.getFile(); const data=validateXlsxWorkbook(XLSX.read(await file.arrayBuffer(),{type:'array'}));
-        if(!data) { setExcelStatus('Connected workbook is not in the expected clinic format.',true); return; }
-        clinicData=data; excelConnected=true; initApp(); setExcelStatus('Connected: '+file.name+'. Changes save to this workbook.');
-      } catch(err) { setExcelStatus('Could not restore Excel connection. Reconnect the file: '+(err.message||''),true); }
+        if(!data) { setExcelPanelMode('reconnect'); setExcelStatus('Remembered workbook is not in the expected clinic format.',true); return; }
+        clinicData=data; excelConnected=true; initApp(); setExcelPanelMode('connected'); setExcelStatus('Connected: '+file.name+'. Changes save to this workbook.');
+      } catch(err) {
+        setExcelPanelMode('reconnect');
+        setExcelStatus('Could not restore remembered Excel connection. Tap Reconnect remembered file or choose the file again. '+(err.message||''),true);
+      }
     }
     function initApp() {
       populateMedicineDatalist();
