@@ -719,6 +719,7 @@
     }
 
     function switchTab(tabId) {
+      if (tabId === 'new-patient-tab' && !requireExcelForEntry()) return;
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.remove('hidden');
@@ -835,7 +836,7 @@
 
     // --- EDIT PATIENT PROFILE ---
     function openEditPatientModal() {
-      if (!activePatient) return;
+      if (!requireExcelForEntry() || !activePatient) return;
       document.getElementById('edit-pat-id').value = activePatient.id;
       document.getElementById('edit-pat-name').value = activePatient.name;
       document.getElementById('edit-pat-mob').value = activePatient.mobile;
@@ -932,7 +933,7 @@
 
     // --- OPD VISIT & SPLIT VITALS ---
     function openNewVisitForm() {
-      if (!activePatient) return;
+      if (!requireExcelForEntry() || !activePatient) return;
       document.getElementById('visit-form-title').innerText = "💊 New OPD Visit & Prescription Entry";
       document.getElementById('edit-visit-index').value = "-1";
 
@@ -964,6 +965,7 @@
     }
 
     function openEditVisitForm(visitIndex) {
+      if (!requireExcelForEntry()) return;
       const visit = activePatient.visits[visitIndex];
       document.getElementById('visit-form-title').innerText = `✏️ Edit OPD Visit (${visit.token})`;
       document.getElementById('edit-visit-index').value = visitIndex;
