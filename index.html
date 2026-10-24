@@ -852,6 +852,7 @@
 
     function saveEditedPatient(e) {
       e.preventDefault();
+      if (!requireExcelForEntry()) return;
       const updatedMobile = document.getElementById('edit-pat-mob').value.trim();
       const digits = updatedMobile.replace(/\D/g, '');
       if (!/^\d{10}$/.test(digits)) { alert('Please enter a valid 10-digit mobile number.'); return; }
@@ -870,6 +871,7 @@
 
     function registerNewPatient(e) {
       e.preventDefault();
+      if (!requireExcelForEntry()) return;
       const mob = document.getElementById('new-pat-mob').value.trim().replace(/\D/g, '');
       if (!/^\d{10}$/.test(mob)) { alert('Please enter a valid 10-digit mobile number.'); return; }
       const now = new Date(), last3 = mob.slice(-3);
@@ -1032,6 +1034,7 @@
     }
 
     function saveVisitAndPrint() {
+      if (!requireExcelForEntry()) return;
       const editIndex = parseInt(document.getElementById('edit-visit-index').value);
       const token = document.getElementById('visit-token-id').value;
       const date = document.getElementById('visit-date').value;
@@ -1192,6 +1195,7 @@
     }
 
     function addNewMedicineMaster() {
+      if (!requireExcelForEntry()) return;
       const name = document.getElementById('new-med-name').value.trim();
       const cat = document.getElementById('new-med-cat').value.trim() || "General";
       if (!name) return alert("Medicine name daalein!");
@@ -1285,7 +1289,6 @@
       const vitalRows = readRows("ExtraVitals");
       const noteRows = readRows("ExtraNotes");
       const medicines = readRows("Medicines").filter(m => typeof m.name === "string" && m.name.trim() !== "");
-      if (!patients.length && !medicines.length && !visitRows.length) return null;
 
       const patientById = new Map(patients.map(p => [String(p.id), p]));
       const visitByKey = new Map();
