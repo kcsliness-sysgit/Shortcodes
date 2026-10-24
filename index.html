@@ -1224,7 +1224,12 @@
         saveToStorage();
         renderMedicineInventory();
         document.getElementById('new-med-name').value = "";
-        document.getElementById('ne    function setBackupStatus(message, isError = false) {
+        document.getElementById('new-med-cat').value = "";
+        alert("Medicine added successfully!");
+      }
+    }
+
+    function setBackupStatus(message, isError = false) {
       const el = document.getElementById('backup-status');
       if (!el) return;
       el.textContent = message;
