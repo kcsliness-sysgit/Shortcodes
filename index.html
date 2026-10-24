@@ -83,14 +83,17 @@
     .pdf-export-layout .prescription-rx-table,.pdf-export-layout .invoice-table { width:100%; border-collapse:collapse; margin-top:4mm; font-size:9.5pt; }
     .pdf-export-layout .prescription-rx-table th,.pdf-export-layout .prescription-rx-table td,.pdf-export-layout .invoice-table th,.pdf-export-layout .invoice-table td { border:1px solid #888; padding:3mm 2.5mm; text-align:left; white-space:normal; }
     .pdf-export-layout .prescription-doctor-note { margin-top:7mm; font-size:10pt; line-height:1.5; }
-    .pdf-export-layout .prescription-signature-reserved { position:absolute; bottom:7mm; right:0; width:62mm; height:24mm; }
-    .pdf-export-layout .prescription-signature-block { text-align:center; font-size:8pt; line-height:1.35; }
+    .pdf-export-layout .prescription-print { padding-bottom:27mm !important; }
+    .pdf-export-layout .prescription-rx-table th,.pdf-export-layout .prescription-rx-table td { border:1px solid #888 !important; }
+    .pdf-export-layout .prescription-rx-table { border:1px solid #888; border-bottom:1px solid #888; }
     .pdf-export-layout .invoice-print { position:relative; min-height:267mm; padding-top:15mm; padding-bottom:40mm; }
     .pdf-export-layout .invoice-heading { text-align:center; padding-bottom:7mm; border-bottom:2px solid #333; }
     .pdf-export-layout .invoice-heading h1 { font-size:20pt; margin:0 0 2mm; }
     .pdf-export-layout .invoice-heading h2 { font-size:15pt; margin:7mm 0 0; }
     .pdf-export-layout .invoice-patient-details { display:grid; grid-template-columns:1fr 1fr; gap:4mm 10mm; margin:9mm 0; font-size:10pt; }
-    .pdf-export-layout .invoice-footer { position:absolute; right:0; bottom:0; display:flex; flex-direction:column; align-items:flex-end; gap:5mm; width:100%; font-size:9pt; text-align:right; }
+    .pdf-export-layout .invoice-footer { position:absolute; right:0; bottom:0; display:flex; flex-direction:column; align-items:stretch; gap:5mm; width:100%; font-size:9pt; text-align:right; }
+    .pdf-export-layout .invoice-thank-you { position:absolute; bottom:0; left:0; width:100%; text-align:center; }
+    .pdf-export-layout .invoice-signature { margin-bottom:12mm; align-self:flex-end; }
     .pdf-export-layout .invoice-signature { text-align:center; min-width:62mm; line-height:1.5; }
     .pdf-export-layout .hidden { display:none !important; }
 
@@ -119,8 +122,9 @@
       .prescription-rx-table th,.prescription-rx-table td,.invoice-table th,.invoice-table td { border:1px solid #888; padding:3mm 2.5mm; text-align:left; white-space:normal; }
       .prescription-rx-table th,.invoice-table thead th { background:#f0f0f0 !important; }
       .prescription-doctor-note { margin-top:7mm; font-size:10.5pt; line-height:1.5; }
-      .prescription-signature-reserved { position:absolute; bottom:7mm; right:15mm; width:62mm; height:24mm; }
-      .prescription-signature-block { text-align:center; font-size:8.5pt; line-height:1.35; }
+      body.printing-prescription #printable-prescription { padding-bottom:27mm !important; }
+      .prescription-rx-table { border:1px solid #888; }
+      .prescription-rx-table th,.prescription-rx-table td { border:1px solid #888 !important; }
       .signature-line { width:52mm; border-top:1px solid #333; margin:0 auto 2mm; }
       .invoice-print { position:relative !important; min-height:267mm !important; padding-top:15mm !important; padding-bottom:40mm !important; }
       .invoice-heading { text-align:center; padding-bottom:7mm; border-bottom:2px solid #333; }
@@ -128,9 +132,9 @@
       .invoice-heading h2 { font-size:15pt; margin:7mm 0 0; }
       .invoice-patient-details { display:grid; grid-template-columns:1fr 1fr; gap:4mm 10mm; margin:9mm 0; font-size:11pt; }
       .invoice-table tfoot th { font-size:12pt; }
-      .invoice-footer { position:absolute !important; right:0 !important; bottom:0 !important; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-end; gap:5mm; margin:0 !important; width:100%; font-size:10pt; text-align:right; }
-      .invoice-thank-you { text-align:right; }
-      .invoice-signature { text-align:center; min-width:62mm; line-height:1.5; }
+      .invoice-footer { position:absolute !important; right:0 !important; bottom:0 !important; display:flex; flex-direction:column; justify-content:flex-end; align-items:stretch; gap:5mm; margin:0 !important; width:100%; font-size:10pt; text-align:right; }
+      .invoice-thank-you { position:absolute; bottom:0; left:0; width:100%; text-align:center !important; }
+      .invoice-signature { text-align:center; min-width:62mm; line-height:1.5; margin-bottom:12mm; align-self:flex-end; }
       .no-print { display:none !important; }
     }
 
@@ -633,7 +637,6 @@
     <div class="prescription-center-title">PRESCRIPTION</div>
     <table class="prescription-rx-table"><thead><tr><th>Medicine Name</th><th>Dosage</th><th>Timing</th><th>Duration</th></tr></thead><tbody id="print-rx-tbody"></tbody></table>
     <div id="print-notes-section" class="prescription-doctor-note"><strong>Doctor's Note / Advice:</strong><div id="print-notes" style="white-space:pre-wrap;margin-top:6px;"></div></div>
-    <div class="prescription-signature-reserved"><div class="prescription-signature-block"><div class="signature-line"></div><strong>Dr. Abhilash A. Sondarkar</strong><div>B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</div><div>Reg. No.: 65170</div></div></div>
     <span id="print-token" class="hidden"></span><span id="print-pat-id" class="hidden"></span><span id="print-mob" class="hidden"></span><span id="print-fee" class="hidden"></span>
   </div>
   <div id="printable-invoice" class="hidden print-document invoice-print">
