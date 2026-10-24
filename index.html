@@ -80,9 +80,11 @@
       body.printing-prescription > *:not(#printable-prescription),
       body.printing-invoice > *:not(#printable-invoice) { display:none !important; }
       body.printing-prescription #printable-prescription,
-      body.printing-invoice #printable-invoice { display:block !important; visibility:visible !important; position:absolute; left:0; top:0; width:210mm; min-height:297mm; padding:0 15mm; margin:0; background:#fff; color:#111; box-shadow:none; }
+      body.printing-invoice #printable-invoice { display:block !important; visibility:visible !important; position:static !important; inset:auto !important; float:none !important; clear:both !important; width:100% !important; min-width:0 !important; max-width:none !important; min-height:297mm; height:auto !important; box-sizing:border-box !important; overflow:visible !important; padding:0 15mm; margin:0 !important; background:#fff !important; color:#111 !important; box-shadow:none !important; transform:none !important; }
       body.printing-prescription #printable-prescription *,
       body.printing-invoice #printable-invoice * { visibility:visible !important; }
+      body.printing-prescription #printable-prescription .hidden,
+      body.printing-invoice #printable-invoice .hidden { display:none !important; }
       .prescription-top-blank { height:52mm; }
       .prescription-patient-grid { display:flex; justify-content:space-between; gap:12mm; font-size:11pt; border-bottom:1px solid #777; padding:4mm 0; }
       .prescription-patient-grid > div { width:50%; }
