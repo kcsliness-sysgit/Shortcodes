@@ -423,7 +423,7 @@
       <div id="medicines-tab" class="tab-content card hidden" style="margin-top: 15px;">
         <h3>💊 Medicine Master Inventory & Backup Management</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-          <button class="btn" onclick="exportBackupData()">💾 Export Full Backup (.xlsx)</button>
+          <button id="export-full-backup-button" class="btn hidden" onclick="exportBackupData()">💾 Export Full Backup (.xlsx)</button>
           <label for="backup-import-mode" style="font-weight:600;">Import mode</label>
           <select id="backup-import-mode" style="max-width:220px;">
             <option value="merge" selected>Merge / Append (recommended)</option>
@@ -673,11 +673,13 @@
       const connect=document.getElementById('excel-connect-button');
       const reconnect=document.getElementById('excel-reconnect-button');
       const viewImport=document.getElementById('excel-view-import-label');
+      const exportButton=document.getElementById('export-full-backup-button');
       if (!panel) return;
       panel.classList.toggle('hidden', mode==='connected');
       if (connect) connect.classList.toggle('hidden', mode==='reconnect');
       if (reconnect) reconnect.classList.toggle('hidden', mode!=='reconnect');
       if (viewImport) viewImport.classList.toggle('hidden', mode==='reconnect');
+      if (exportButton) exportButton.classList.toggle('hidden', mode!=='connected');
     }
     function openHandleDB() { return new Promise((resolve,reject) => { const req=indexedDB.open('clinic_excel_connection_db',1); req.onupgradeneeded=()=>req.result.createObjectStore('handles'); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }
     async function saveExcelHandle(handle) { const db=await openHandleDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('handles','readwrite'); tx.objectStore('handles').put(handle,'master-workbook'); tx.oncomplete=()=>{db.close();resolve();}; tx.onerror=()=>{db.close();reject(tx.error);}; }); }
@@ -1284,6 +1286,10 @@
     }
 
     function exportBackupData() {
+      if (!excelConnected || !connectedExcelHandle) {
+        setBackupStatus("Connect or import your clinic Excel workbook before exporting a full backup.", true);
+        return;
+      }
       if (!getXlsxLibrary()) return;
       try {
         const wb = XLSX.utils.book_new();
