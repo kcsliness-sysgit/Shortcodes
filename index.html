@@ -587,7 +587,9 @@
         <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap:wrap;">
           <button class="btn btn-success" onclick="saveVisitAndPrint('save')">💾 Save Visit</button>
           <button class="btn" onclick="saveVisitAndPrint('prescription')">🖨️ Save & Print Prescription</button>
+          <button class="btn btn-success" onclick="saveVisitAndPrint('pdf-prescription')">⬇️ Save Prescription as PDF</button>
           <button class="btn btn-warning" onclick="saveVisitAndPrint('invoice')">🧾 Save & Print Invoice Bill</button>
+          <button class="btn btn-success" onclick="saveVisitAndPrint('pdf-invoice')">⬇️ Save Invoice as PDF</button>
           <button class="btn btn-secondary" onclick="closeVisitForm()">Cancel</button>
         </div>
       </div>
@@ -617,6 +619,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script>
     let clinicData = { patients: [], medicines: [] };
 
@@ -1130,6 +1133,8 @@
       closeVisitForm();
       if (printAction === 'prescription') triggerPrintSlip(activePatient, visitData);
       else if (printAction === 'invoice') triggerPrintInvoice(activePatient, visitData);
+      else if (printAction === 'pdf-prescription') triggerPrintSlip(activePatient, visitData, 'pdf');
+      else if (printAction === 'pdf-invoice') triggerPrintInvoice(activePatient, visitData, 'pdf');
     }
 
     function deleteVisit(patId, visitIndex) {
@@ -1167,7 +1172,9 @@
             </div>
             <div style="display: flex; gap: 8px; margin-top: 8px;">
               <button class="btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="reprintVisit(${index})">🖨️ Prescription</button>
+              <button class="btn btn-success" style="padding: 4px 10px; font-size: 0.75rem;" onclick="reprintVisit(${index}, 'pdf')">⬇️ Prescription PDF</button>
               <button class="btn btn-success" style="padding: 4px 10px; font-size: 0.75rem;" onclick="printInvoiceForVisit(${index})">🧾 Invoice Bill</button>
+              <button class="btn btn-success" style="padding: 4px 10px; font-size: 0.75rem;" onclick="printInvoiceForVisit(${index}, 'pdf')">⬇️ Invoice PDF</button>
               <button class="btn btn-warning" style="padding: 4px 10px; font-size: 0.75rem;" onclick="openEditVisitForm(${index})">✏️ Edit</button>
               <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="deleteVisit('${activePatient.id}', ${index})">🗑️ Delete</button>
             </div>
@@ -1176,12 +1183,55 @@
       });
     }
 
-    function reprintVisit(visitIndex) {
-      triggerPrintSlip(activePatient, activePatient.visits[visitIndex]);
-    }
-    function printInvoiceForVisit(visitIndex) {
+    function reprintVisit(visitIndex, outputMode = 'print') {
       if (!activePatient || !activePatient.visits[visitIndex]) return;
-      triggerPrintInvoice(activePatient, activePatient.visits[visitIndex]);
+      triggerPrintSlip(activePatient, activePatient.visits[visitIndex], outputMode);
+    }
+    function printInvoiceForVisit(visitIndex, outputMode = 'print') {
+      if (!activePatient || !activePatient.visits[visitIndex]) return;
+      triggerPrintInvoice(activePatient, activePatient.visits[visitIndex], outputMode);
+    }
+
+    async function downloadPrintablePdf(elementId, fileName) {
+      const source = document.getElementById(elementId);
+      if (!source) { alert('PDF export failed: document template not found.'); return; }
+      if (typeof html2pdf === 'undefined') { alert('PDF library did not load. Check your internet connection and reload the app.'); return; }
+      const clone = source.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.classList.remove('hidden');
+      clone.style.setProperty('display','block','important');
+      clone.style.setProperty('position','relative','important');
+      clone.style.setProperty('left','auto','important');
+      clone.style.setProperty('top','auto','important');
+      clone.style.setProperty('width','180mm','important');
+      clone.style.setProperty('min-height','267mm','important');
+      clone.style.setProperty('height','auto','important');
+      clone.style.setProperty('overflow','visible','important');
+      clone.style.setProperty('box-sizing','border-box','important');
+      clone.style.setProperty('padding','0','important');
+      clone.style.setProperty('margin','0','important');
+      clone.style.setProperty('background','#ffffff','important');
+      clone.style.setProperty('color','#111111','important');
+      const staging = document.createElement('div');
+      staging.setAttribute('aria-hidden','true');
+      staging.style.cssText='position:fixed;left:-10000px;top:0;width:180mm;background:#fff;z-index:-1;overflow:visible;';
+      staging.appendChild(clone);
+      document.body.appendChild(staging);
+      try {
+        await html2pdf().set({
+          margin:[12,15,12,15],
+          filename:fileName,
+          image:{type:'jpeg',quality:0.98},
+          html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},
+          jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+          pagebreak:{mode:['css','legacy']}
+        }).from(clone).save();
+      } catch(err) {
+        console.error('PDF export failed',err);
+        alert('PDF save failed: '+(err && err.message ? err.message : 'Unknown error'));
+      } finally {
+        staging.remove();
+      }
     }
     function printDocumentForWindow(elementId) {
       const el=document.getElementById(elementId);
@@ -1219,7 +1269,7 @@
         },250);
       }));
     }
-    function triggerPrintInvoice(patient, visit) {
+    function triggerPrintInvoice(patient, visit, outputMode = 'print') {
       document.getElementById('invoice-patient-name').innerText=patient.name || '';
       document.getElementById('invoice-patient-id').innerText=patient.id || '';
       document.getElementById('invoice-token').innerText=visit.token || '';
@@ -1233,10 +1283,16 @@
       document.getElementById('invoice-fees-tbody').innerHTML=rows.map(r=>'<tr><td>'+String(r.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</td><td style="text-align:right;">'+r.amount.toLocaleString('en-IN')+'</td></tr>').join('');
       const total=Number(visit.totalFee ?? visit.fee ?? rows.reduce((sum,r)=>sum+r.amount,0)) || 0;
       document.getElementById('invoice-total').innerText=total.toLocaleString('en-IN');
-      printDocumentForWindow('printable-invoice');
+      if (outputMode === 'pdf') {
+        const safeName=String(patient.name || 'Patient').replace(/[^a-z0-9_-]+/gi,'_');
+        const token=String(visit.token || 'OPD').replace(/[^a-z0-9_-]+/gi,'_');
+        downloadPrintablePdf('printable-invoice', 'Invoice_'+safeName+'_'+token+'.pdf');
+      } else {
+        printDocumentForWindow('printable-invoice');
+      }
     }
 
-    function triggerPrintSlip(patient, visit) {
+    function triggerPrintSlip(patient, visit, outputMode = 'print') {
       document.getElementById('print-date').innerText = visit.date;
       document.getElementById('print-token').innerText = visit.token;
       document.getElementById('print-pat-id').innerText = patient.id;
@@ -1272,7 +1328,13 @@
         `;
       });
 
-      printDocumentForWindow('printable-prescription');
+      if (outputMode === 'pdf') {
+        const safeName=String(patient.name || 'Patient').replace(/[^a-z0-9_-]+/gi,'_');
+        const token=String(visit.token || 'OPD').replace(/[^a-z0-9_-]+/gi,'_');
+        downloadPrintablePdf('printable-prescription', 'Prescription_'+safeName+'_'+token+'.pdf');
+      } else {
+        printDocumentForWindow('printable-prescription');
+      }
     }
 
     // --- MEDICINES & BACKUP ---
