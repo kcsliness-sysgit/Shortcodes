@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>City Health Clinic - Advanced OPD System</title>
+  <title>Dr. Abhilash Skin Clinic | OPD Management</title>
+  <meta name="description" content="Dr. Abhilash Skin Clinic OPD management — patient registration, visits, prescriptions, invoices and clinic records.">
+  <meta name="theme-color" content="#b7d0a9">
+  <meta property="og:title" content="Dr. Abhilash Skin Clinic | OPD Management">
+  <meta property="og:description" content="Patient visits, prescriptions, invoices and clinic records for Dr. Abhilash Skin Clinic.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="ebf65580-ad9c-4feb-b63b-25394b59de36.png">
+  <link rel="apple-touch-icon" href="ebf65580-ad9c-4feb-b63b-25394b59de36.png">
   <style>
     :root {
       --primary: #0284c7;
@@ -309,7 +316,7 @@
     }
     .clinic-app-header p { color: #415a43 !important; }
     .clinic-app-brand { display:flex; align-items:center; gap:14px; }
-    .clinic-brand-mark { display:grid; place-items:center; width:44px; height:44px; border-radius:50%; background:#f5f8ed; color:#42784b; font-size:27px; font-weight:800; border:1px solid #b7cbaa; }
+    .clinic-brand-mark { display:block; width:56px; height:56px; flex:0 0 56px; border-radius:50%; object-fit:contain; background:#f5f8ed; border:1px solid #b7cbaa; }
     .clinic-app-header .btn { color:#fff; background:#426f49; border-color:#426f49; }
     .prescription-letterhead {
       overflow:hidden; margin-bottom:18px; border:1px solid #9db995; border-radius:3px;
@@ -344,7 +351,7 @@
     }
     @media(max-width:600px) {
       .clinic-app-brand { align-items:flex-start; }
-      .clinic-brand-mark { width:38px; height:38px; flex:0 0 38px; font-size:22px; }
+      .clinic-brand-mark { width:44px; height:44px; flex-basis:44px; }
       .letterhead-main { align-items:flex-start; flex-direction:column; padding:12px; gap:12px; }
       .letterhead-doctor { text-align:left; }
       .letterhead-bottom { align-items:flex-start; flex-direction:column; }
@@ -368,7 +375,7 @@
   <div id="app-container">
     <header class="no-print clinic-app-header">
       <div class="clinic-app-brand">
-        <span class="clinic-brand-mark">✚</span>
+        <img class="clinic-brand-mark" src="ebf65580-ad9c-4feb-b63b-25394b59de36.png" alt="Dr. Abhilash Skin Clinic logo">
         <div>
           <h2 id="clinic-app-title">डॉ. अभिलाष स्किन क्लिनिक</h2>
           <p id="clinic-app-subtitle">Dr. Abhilash A. Sondarkar · B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</p>
