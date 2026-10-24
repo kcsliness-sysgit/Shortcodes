@@ -638,8 +638,6 @@
     let clinicData = { patients: [], medicines: [] };
 
     let activePatient = null;
-
-    let activePatient = null;
     let connectedExcelHandle = null;
     let excelConnected = false;
     let excelWriteQueue = Promise.resolve();
@@ -666,6 +664,53 @@
       return false;
     }
 
+    function setExcelStatus(message, isError = false) {
+      ['excel-connection-status','excel-inline-status'].forEach(id => { const el = document.getElementById(id); if (el) { el.textContent = message; el.style.color = isError ? 'var(--danger)' : 'var(--success)'; } });
+    }
+    function openHandleDB() { return new Promise((resolve,reject) => { const req=indexedDB.open('clinic_excel_connection_db',1); req.onupgradeneeded=()=>req.result.createObjectStore('handles'); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }
+    async function saveExcelHandle(handle) { const db=await openHandleDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('handles','readwrite'); tx.objectStore('handles').put(handle,'master-workbook'); tx.oncomplete=()=>{db.close();resolve();}; tx.onerror=()=>{db.close();reject(tx.error);}; }); }
+    async function loadExcelHandle() { const db=await openHandleDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('handles','readonly'); const req=tx.objectStore('handles').get('master-workbook'); req.onsuccess=()=>{db.close();resolve(req.result||null);}; req.onerror=()=>{db.close();reject(req.error);}; }); }
+    async function excelPermission(handle, ask) { let p=await handle.queryPermission({mode:'readwrite'}); if(p!=='granted' && ask) p=await handle.requestPermission({mode:'readwrite'}); return p==='granted'; }
+    async function connectExcelFile() {
+      if (!window.showOpenFilePicker) { document.getElementById('first-import-file').click(); setExcelStatus('This browser cannot remember a file picker connection. Choose a workbook; you may need to reconnect after reload.',true); return; }
+      try {
+        const files=await window.showOpenFilePicker({multiple:false,types:[{description:'Excel workbook',accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]});
+        const handle=files[0]; if(!(await excelPermission(handle,true))) { setExcelStatus('File permission not granted. Reconnect to make entries.',true); return; }
+        const file=await handle.getFile(); const wb=XLSX.read(await file.arrayBuffer(),{type:'array'}); const data=validateXlsxWorkbook(wb);
+        if(!data) { setExcelStatus('This workbook needs Patients and Medicines sheets in the clinic backup format. No data changed.',true); return; }
+        connectedExcelHandle=handle; await saveExcelHandle(handle); clinicData=data; excelConnected=true; activePatient=null; initApp();
+        setExcelStatus('Connected: '+file.name+'. Changes will save to this workbook. Browser may ask permission again if site data is cleared.');
+      } catch(err) { if(err && err.name==='AbortError') return; setExcelStatus('Could not connect Excel: '+(err.message||'unknown error'),true); }
+    }
+    async function importFirstExcelFile(e) {
+      const input=e.target, file=input.files && input.files[0]; if(!file) return;
+      try { const wb=XLSX.read(await file.arrayBuffer(),{type:'array'}); const data=validateXlsxWorkbook(wb); if(!data) { setExcelStatus('Invalid clinic workbook. Required sheets: Patients and Medicines.',true); return; }
+        clinicData=data; excelConnected=false; connectedExcelHandle=null; initApp(); setExcelStatus('Imported '+file.name+' for this page only. This browser cannot retain the connection; reconnect after reload before editing.',true);
+      } catch(err) { setExcelStatus('Import failed: '+(err.message||'unknown error'),true); } finally { input.value=''; }
+    }
+    function buildClinicWorkbook() {
+      const wb=XLSX.utils.book_new(); const patients=(clinicData.patients||[]).map(p=>{const row={...p};delete row.visits;return row;});
+      const visits=[],prescriptions=[],extraFees=[],extraVitals=[],extraNotes=[];
+      (clinicData.patients||[]).forEach(p=>(p.visits||[]).forEach((v,index)=>{
+        const key=String(v.id||v.token||p.id+'::'+(v.date||'')+'::'+index); const row={patientId:p.id,visitKey:key,visitIndex:index,...v};
+        delete row.rx;delete row.extraFees;delete row.extraVitals;delete row.extraNotes;visits.push(row);
+        (v.rx||[]).forEach((x,i)=>prescriptions.push({patientId:p.id,visitKey:key,rxIndex:i,...x}));
+        (v.extraFees||[]).forEach((x,i)=>extraFees.push({patientId:p.id,visitKey:key,itemIndex:i,...x}));
+        (v.extraVitals||[]).forEach((x,i)=>extraVitals.push({patientId:p.id,visitKey:key,itemIndex:i,...x}));
+        (v.extraNotes||[]).forEach((x,i)=>extraNotes.push({patientId:p.id,visitKey:key,itemIndex:i,...x}));
+      }));
+      [['Patients',patients],['Visits',visits],['Prescriptions',prescriptions],['ExtraFees',extraFees],['ExtraVitals',extraVitals],['ExtraNotes',extraNotes],['Medicines',clinicData.medicines||[]],['BackupInfo',[{app:'Dr Abhilash Skin Clinic',format:'clinic-xlsx-backup',version:1,exportedAt:new Date().toISOString()}]]].forEach(([name,rows])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{}]),name));
+      return wb;
+    }
+    async function writeConnectedWorkbook() { if(!excelConnected||!connectedExcelHandle) return; const wb=buildClinicWorkbook(); const bytes=XLSX.write(wb,{bookType:'xlsx',type:'array'}); const writable=await connectedExcelHandle.createWritable(); await writable.write(bytes); await writable.close(); }
+    async function restoreExcelConnection() {
+      try { const handle=await loadExcelHandle(); if(!handle) return; connectedExcelHandle=handle;
+        if(!(await excelPermission(handle,false))) { setExcelStatus('Excel connection remembered, but permission needs renewal. Click Connect / Reconnect Excel.',true); return; }
+        const file=await handle.getFile(); const data=validateXlsxWorkbook(XLSX.read(await file.arrayBuffer(),{type:'array'}));
+        if(!data) { setExcelStatus('Connected workbook is not in the expected clinic format.',true); return; }
+        clinicData=data; excelConnected=true; initApp(); setExcelStatus('Connected: '+file.name+'. Changes save to this workbook.');
+      } catch(err) { setExcelStatus('Could not restore Excel connection. Reconnect the file: '+(err.message||''),true); }
+    }
     function initApp() {
       populateMedicineDatalist();
       renderMedicineInventory();
