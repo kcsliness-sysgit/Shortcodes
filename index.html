@@ -1185,20 +1185,35 @@
       const el=document.getElementById(elementId);
       const modeClass=elementId==='printable-invoice'?'printing-invoice':'printing-prescription';
       let cleaned=false;
+      let printStarted=false;
       const cleanup=()=>{
         if(cleaned) return;
         cleaned=true;
         document.body.classList.remove('printing-prescription','printing-invoice');
         el.classList.add('hidden');
         window.removeEventListener('afterprint',cleanup);
+        document.removeEventListener('visibilitychange',onVisibilityChange);
+        window.removeEventListener('focus',onWindowFocus);
+      };
+      const onVisibilityChange=()=>{
+        // On mobile Chrome, the print preview can open asynchronously after print() returns.
+        // Only clean up when the user returns to the app after printing.
+        if(printStarted && document.visibilityState==='visible') setTimeout(cleanup,500);
+      };
+      const onWindowFocus=()=>{
+        if(printStarted) setTimeout(cleanup,500);
       };
       el.classList.remove('hidden');
       document.body.classList.remove('printing-prescription','printing-invoice');
       document.body.classList.add(modeClass);
       window.addEventListener('afterprint',cleanup,{once:true});
+      document.addEventListener('visibilitychange',onVisibilityChange);
+      window.addEventListener('focus',onWindowFocus);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        printStarted=true;
         window.print();
-        setTimeout(cleanup,1500);
+        // Do not use a fixed timeout here: Android Chrome may return from print()
+        // before its preview has rendered, which can hide the document too early.
       }));
     }
     function triggerPrintInvoice(patient, visit) {
