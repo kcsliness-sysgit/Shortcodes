@@ -73,6 +73,27 @@
     textarea{resize:vertical;min-height:76px}
     @media(max-width:700px){header{padding:14px;align-items:flex-start;gap:12px;flex-direction:column}header h2{font-size:1.15rem}.container{margin:12px auto;padding:0 10px}.card{padding:15px;border-radius:10px}.nav-tabs{margin-top:10px;gap:5px;padding:5px}.tab-btn{padding:9px 11px;font-size:.82rem}.form-grid{grid-template-columns:1fr;gap:12px}.patient-list-item{align-items:flex-start;flex-direction:column;gap:8px}.patient-list-item .btn{width:100%}#search-input{min-width:0}.rx-row{grid-template-columns:1fr 1fr}.rx-row .rx-med-name{grid-column:1/-1}.dynamic-field-row{grid-template-columns:1fr}table{display:block;overflow-x:auto;white-space:nowrap}#auth-wrapper{padding:16px;align-items:flex-start;padding-top:12vh}.login-card{padding:clamp(22px,5vw,34px);max-width:440px}.login-card h2{font-size:1.25rem}}
 
+    .pdf-export-layout { display:block !important; width:180mm !important; min-height:267mm !important; box-sizing:border-box !important; background:#fff !important; color:#111 !important; font-family:Arial,sans-serif !important; font-size:10pt !important; position:relative !important; overflow:visible !important; }
+    .pdf-export-layout .prescription-top-blank { height:52mm; }
+    .pdf-export-layout .prescription-patient-grid { display:flex; justify-content:space-between; align-items:flex-start; gap:10mm; font-size:10pt; border-bottom:1px solid #777; padding:4mm 0; }
+    .pdf-export-layout .prescription-patient-grid > div { width:50%; }
+    .pdf-export-layout .prescription-vitals-list { display:flex; flex-direction:column; align-items:flex-end; gap:2mm; margin-top:2mm; text-align:right; }
+    .pdf-export-layout .prescription-vital-row { display:flex; justify-content:flex-end; gap:3mm; width:100%; }
+    .pdf-export-layout .prescription-center-title { text-align:center; font-weight:800; font-size:14pt; margin:7mm 0 5mm; }
+    .pdf-export-layout .prescription-rx-table,.pdf-export-layout .invoice-table { width:100%; border-collapse:collapse; margin-top:4mm; font-size:9.5pt; }
+    .pdf-export-layout .prescription-rx-table th,.pdf-export-layout .prescription-rx-table td,.pdf-export-layout .invoice-table th,.pdf-export-layout .invoice-table td { border:1px solid #888; padding:3mm 2.5mm; text-align:left; white-space:normal; }
+    .pdf-export-layout .prescription-doctor-note { margin-top:7mm; font-size:10pt; line-height:1.5; }
+    .pdf-export-layout .prescription-signature-reserved { position:absolute; bottom:7mm; right:0; width:62mm; height:24mm; }
+    .pdf-export-layout .prescription-signature-block { text-align:center; font-size:8pt; line-height:1.35; }
+    .pdf-export-layout .invoice-print { position:relative; min-height:267mm; padding-top:15mm; padding-bottom:40mm; }
+    .pdf-export-layout .invoice-heading { text-align:center; padding-bottom:7mm; border-bottom:2px solid #333; }
+    .pdf-export-layout .invoice-heading h1 { font-size:20pt; margin:0 0 2mm; }
+    .pdf-export-layout .invoice-heading h2 { font-size:15pt; margin:7mm 0 0; }
+    .pdf-export-layout .invoice-patient-details { display:grid; grid-template-columns:1fr 1fr; gap:4mm 10mm; margin:9mm 0; font-size:10pt; }
+    .pdf-export-layout .invoice-footer { position:absolute; right:0; bottom:0; display:flex; flex-direction:column; align-items:flex-end; gap:5mm; width:100%; font-size:9pt; text-align:right; }
+    .pdf-export-layout .invoice-signature { text-align:center; min-width:62mm; line-height:1.5; }
+    .pdf-export-layout .hidden { display:none !important; }
+
     .print-document { display:none; }
     @media print {
       @page { size:A4 portrait; margin:0; }
@@ -1203,6 +1224,7 @@
       const clone = source.cloneNode(true);
       clone.removeAttribute('id');
       clone.classList.remove('hidden');
+      clone.classList.add('pdf-export-layout');
       clone.style.setProperty('display','block','important');
       clone.style.setProperty('position','relative','important');
       clone.style.setProperty('left','auto','important');
@@ -1308,10 +1330,15 @@
       const vitalsContainer=document.getElementById('print-vitals-list');
       const vitalEntries=[];
       const addVital=(label,value)=>{if(value!==undefined&&value!==null&&String(value).trim()!=='')vitalEntries.push({label,value:String(value).trim()});};
-      addVital('Weight',visit.weight);
-      addVital('BP',visit.bp);
-      addVital('Pulse',visit.pulse);
-      addVital('Vitals',visit.vitals);
+      if (visit.vitals) {
+        String(visit.vitals).split(/[,;\n]+/).forEach(part=>{
+          const item=part.trim();
+          if(!item)return;
+          const match=item.match(/^([^:]+):\s*(.*)$/);
+          if(match)addVital(match[1].trim(),match[2].trim());
+          else addVital('Vitals',item);
+        });
+      }
       (Array.isArray(visit.extraVitals)?visit.extraVitals:[]).forEach(v=>addVital(v.title,v.value));
       const uniqueVitals=[]; const seenVitals=new Set();
       vitalEntries.forEach(v=>{const key=v.label+':'+v.value;if(!seenVitals.has(key)){seenVitals.add(key);uniqueVitals.push(v);}});
