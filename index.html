@@ -74,8 +74,11 @@
     @media(max-width:700px){header{padding:14px;align-items:flex-start;gap:12px;flex-direction:column}header h2{font-size:1.15rem}.container{margin:12px auto;padding:0 10px}.card{padding:15px;border-radius:10px}.nav-tabs{margin-top:10px;gap:5px;padding:5px}.tab-btn{padding:9px 11px;font-size:.82rem}.form-grid{grid-template-columns:1fr;gap:12px}.patient-list-item{align-items:flex-start;flex-direction:column;gap:8px}.patient-list-item .btn{width:100%}#search-input{min-width:0}.rx-row{grid-template-columns:1fr 1fr}.rx-row .rx-med-name{grid-column:1/-1}.dynamic-field-row{grid-template-columns:1fr}table{display:block;overflow-x:auto;white-space:nowrap}#auth-wrapper{padding:16px;align-items:flex-start;padding-top:12vh}.login-card{padding:clamp(22px,5vw,34px);max-width:440px}.login-card h2{font-size:1.25rem}}
 
     .pdf-export-layout { display:block !important; width:180mm !important; min-height:267mm !important; box-sizing:border-box !important; background:#fff !important; color:#111 !important; font-family:Arial,sans-serif !important; font-size:10pt !important; position:relative !important; overflow:visible !important; }
-    .pdf-export-layout .prescription-letterhead { text-align:center; border-bottom:1px solid #777; padding:4mm 0 5mm; margin-bottom:4mm; }
-    .pdf-export-layout .prescription-letterhead h2 { font-size:17pt; margin-bottom:2mm; }
+    .pdf-export-layout .prescription-letterhead { display:flex; justify-content:space-between; align-items:flex-start; gap:8mm; border-bottom:1px solid #777; padding:4mm 0 5mm; margin-bottom:4mm; font-size:9pt; line-height:1.45; }
+    .pdf-export-layout .prescription-letterhead-left { text-align:left; flex:1; }
+    .pdf-export-layout .prescription-letterhead-right { text-align:right; flex:1; }
+    .pdf-export-layout .prescription-letterhead strong { font-size:10pt; }
+    .pdf-export-layout .clinic-evening-time { padding-right:0; }
     .pdf-export-layout .prescription-doctor-signature { position:absolute; right:0; bottom:27mm; width:62mm; text-align:center; font-size:9pt; line-height:1.45; }
     .pdf-export-layout .prescription-patient-grid { display:flex; justify-content:space-between; align-items:flex-start; gap:10mm; font-size:10pt; border-bottom:1px solid #777; padding:4mm 0; }
     .pdf-export-layout .prescription-patient-grid > div { width:50%; }
@@ -111,8 +114,11 @@
       body.printing-invoice #printable-invoice * { visibility:visible !important; }
       body.printing-prescription #printable-prescription .hidden,
       body.printing-invoice #printable-invoice .hidden { display:none !important; }
-      .prescription-letterhead { text-align:center; border-bottom:1px solid #777; padding:4mm 0 5mm; margin-bottom:4mm; }
-      .prescription-letterhead h2 { font-size:17pt; margin-bottom:2mm; }
+      .prescription-letterhead { display:flex; justify-content:space-between; align-items:flex-start; gap:8mm; border-bottom:1px solid #777; padding:4mm 0 5mm; margin-bottom:4mm; font-size:9pt; line-height:1.45; }
+      .prescription-letterhead-left { text-align:left; flex:1; }
+      .prescription-letterhead-right { text-align:right; flex:1; }
+      .prescription-letterhead strong { font-size:10pt; }
+      .clinic-evening-time { padding-right:0; }
       .prescription-doctor-signature { position:absolute; right:15mm; bottom:27mm; width:62mm; text-align:center; font-size:9pt; line-height:1.45; }
       .prescription-patient-grid { display:flex; justify-content:space-between; align-items:flex-start; gap:12mm; font-size:11pt; border-bottom:1px solid #777; padding:4mm 0; }
       .prescription-patient-grid > div { width:50%; }
@@ -633,7 +639,7 @@
   <datalist id="medicines-datalist"></datalist>
 
   <div id="printable-prescription" class="hidden print-document prescription-print">
-    <div class="prescription-letterhead"><h2>डॉ. अभिलाष स्किन क्लिनिक</h2><div>Dr. Abhilash A. Sondarkar · B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</div><div>Reg. No.: 65170</div></div>
+    <div class="prescription-letterhead"><div class="prescription-letterhead-left"><strong>Dr. Abhilash A. Sondarkar</strong><div>B.H.M.S. (M.U.H.S.)</div><div>M.D. (A.M.), PGDCC</div><div>Reg. No.: 65170</div></div><div class="prescription-letterhead-right"><strong>Dr. Abhilash Skin Clinic</strong><div>CONTACT: 9275022403</div><div>TIME: 10 AM TO 2 PM</div><div class="clinic-evening-time">6 PM TO 9 PM</div></div></div>
     <div class="prescription-patient-grid">
       <div><strong>Patient Name:</strong> <span id="print-name"></span><div style="margin-top:8px;"><strong>Age:</strong> <span id="print-age-gender"></span></div></div>
       <div style="text-align:right;"><strong>Date:</strong> <span id="print-date"></span><div style="margin-top:8px;"><strong>Vitals:</strong></div><div id="print-vitals-list" class="prescription-vitals-list"></div></div>
