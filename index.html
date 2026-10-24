@@ -366,6 +366,7 @@
             <div style="display: flex; gap: 8px;">
               <button class="btn btn-warning" onclick="openEditPatientModal()">✏️ Edit Profile</button>
               <button class="btn btn-success" onclick="openNewVisitForm()">+ Add New Visit</button>
+              <button class="btn btn-danger" onclick="deletePatient(activePatient.id)">🗑️ Delete Patient</button>
             </div>
           </div>
 
@@ -740,15 +741,14 @@
     }
 
     function previewAutoID() {
-      const mob = document.getElementById('new-pat-mob').value.trim();
-      if (mob.length < 3) {
-        document.getElementById('new-pat-id').value = "";
-        return;
-      }
-      const last3 = mob.slice(-3);
-      const existing = clinicData.patients.filter(p => p.mobile.slice(-3) === last3);
-      const counter = String(existing.length).padStart(2, '0');
-      document.getElementById('new-pat-id').value = `P-${last3}-${counter}`;
+      const mob = document.getElementById('new-pat-mob').value.trim().replace(/\D/g, '');
+      if (mob.length < 3) { document.getElementById('new-pat-id').value = ''; return; }
+      const now = new Date(), last3 = mob.slice(-3);
+      const hhmm = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+      const base = 'P-' + last3 + '-' + hhmm;
+      const used = new Set((clinicData.patients || []).map(p => String(p.id)));
+      let id = base, n = 1; while (used.has(id)) id = base + '-' + n++;
+      document.getElementById('new-pat-id').value = id;
     }
 
     // --- SEARCH LOGIC (NO POPUP ALERT) ---
@@ -807,6 +807,18 @@
       document.getElementById('no-record-found-box').classList.add('hidden');
     }
 
+    function deletePatient(patId) {
+      const patient = clinicData.patients.find(p => String(p.id) === String(patId)); if (!patient) return;
+      const count = (patient.visits || []).length;
+      const total = (patient.visits || []).reduce((sum, v) => sum + (Number(v.totalFee ?? v.fee ?? 0) || 0), 0);
+      const msg = 'PERMANENTLY DELETE PATIENT?\n\n' + patient.name + ' (ID: ' + patient.id + ')\nOPD visits: ' + count + '\nRecorded visit fees: ₹' + total + '\n\nPatient and linked visits will be removed from this browser database and will no longer appear in OPD/earnings reports. Export an Excel backup first if needed.\n\nContinue?';
+      if (!confirm(msg)) return;
+      clinicData.patients = clinicData.patients.filter(p => String(p.id) !== String(patId));
+      if (activePatient && String(activePatient.id) === String(patId)) activePatient = null;
+      saveToStorage(); document.getElementById('active-patient-profile').classList.add('hidden'); document.getElementById('edit-patient-card').classList.add('hidden'); document.getElementById('family-results-card').classList.add('hidden'); document.getElementById('no-record-found-box').classList.add('hidden');
+      renderRecentPatients(); filterOPDLogs(); updateReports(); alert('Patient and linked visits deleted from this browser database.');
+    }
+
     // --- EDIT PATIENT PROFILE ---
     function openEditPatientModal() {
       if (!activePatient) return;
@@ -827,72 +839,34 @@
     function saveEditedPatient(e) {
       e.preventDefault();
       const updatedMobile = document.getElementById('edit-pat-mob').value.trim();
+      const digits = updatedMobile.replace(/\D/g, '');
+      if (!/^\d{10}$/.test(digits)) { alert('Please enter a valid 10-digit mobile number.'); return; }
       const currentMobile = String(activePatient.mobile || '').trim();
-
-      if (updatedMobile !== currentMobile) {
-        const confirmed = confirm(
-          "WARNING: Changing this patient's mobile number will generate a new Patient ID. Existing patient history may become unlinked from records that reference the old ID.\n\nContinue with the new mobile number and Patient ID?"
-        );
-        if (!confirmed) {
-          document.getElementById('edit-pat-mob').value = currentMobile;
-          return;
-        }
-
-        const last3 = updatedMobile.slice(-3);
-        const existing = clinicData.patients.filter(p =>
-          p !== activePatient && String(p.mobile || '').slice(-3) === last3
-        );
-        const counter = String(existing.length).padStart(2, '0');
-        const newId = `P-${last3}-${counter}`;
-        const duplicateId = clinicData.patients.some(p => p !== activePatient && p.id === newId);
-        if (duplicateId) {
-          alert("A Patient ID conflict was detected. Please review the mobile number or existing patient records before updating.");
-          return;
-        }
-        activePatient.id = newId;
-        document.getElementById('edit-pat-id').value = newId;
+      if (updatedMobile !== currentMobile && !confirm('Mobile number change: Patient ID will remain ' + activePatient.id + '. Existing OPD, prescription and financial history will stay linked. Update mobile number?')) {
+        document.getElementById('edit-pat-mob').value = currentMobile; return;
       }
-
       activePatient.name = document.getElementById('edit-pat-name').value.trim();
-      activePatient.mobile = updatedMobile;
+      activePatient.mobile = digits;
       activePatient.gender = document.getElementById('edit-pat-gender').value;
       activePatient.bloodGroup = document.getElementById('edit-pat-blood').value;
       activePatient.location = document.getElementById('edit-pat-location').value.trim();
       activePatient.city = document.getElementById('edit-pat-city').value.trim();
-
-      saveToStorage();
-      selectPatient(activePatient.id);
-      alert("Patient profile updated!");
+      saveToStorage(); selectPatient(activePatient.id); alert('Patient profile updated! Patient ID remains unchanged.');
     }
 
     function registerNewPatient(e) {
       e.preventDefault();
-      const mob = document.getElementById('new-pat-mob').value.trim();
-      const id = document.getElementById('new-pat-id').value.trim();
-      
-      const newPat = {
-        id: id,
-        name: document.getElementById('new-pat-name').value.trim(),
-        mobile: mob,
-        gender: document.getElementById('new-pat-gender').value,
-        bloodGroup: document.getElementById('new-pat-blood').value,
-        location: document.getElementById('new-pat-location').value.trim(),
-        city: document.getElementById('new-pat-city').value.trim(),
-        visits: []
-      };
-
-      clinicData.patients.push(newPat);
-      saveToStorage();
-      alert("New Patient Profile Registered Successfully!");
-
-      document.getElementById('new-patient-form').reset();
-      document.getElementById('new-pat-id').value = "";
-
-      switchTab('revisit-tab');
-      document.getElementById('search-input').value = newPat.mobile;
-      searchPatient();
-      selectPatient(newPat.id);
-      openNewVisitForm();
+      const mob = document.getElementById('new-pat-mob').value.trim().replace(/\D/g, '');
+      if (!/^\d{10}$/.test(mob)) { alert('Please enter a valid 10-digit mobile number.'); return; }
+      const now = new Date(), last3 = mob.slice(-3);
+      const hhmm = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+      const base = 'P-' + last3 + '-' + hhmm;
+      const used = new Set((clinicData.patients || []).map(p => String(p.id)));
+      let id = base, n = 1; while (used.has(id)) id = base + '-' + n++;
+      const newPat = { id, createdAt: now.toISOString(), name: document.getElementById('new-pat-name').value.trim(), mobile: mob, gender: document.getElementById('new-pat-gender').value, bloodGroup: document.getElementById('new-pat-blood').value, location: document.getElementById('new-pat-location').value.trim(), city: document.getElementById('new-pat-city').value.trim(), visits: [] };
+      clinicData.patients.push(newPat); saveToStorage(); alert('New Patient Profile Registered Successfully! ID: ' + id);
+      document.getElementById('new-patient-form').reset(); document.getElementById('new-pat-id').value = '';
+      switchTab('revisit-tab'); document.getElementById('search-input').value = newPat.mobile; searchPatient(); selectPatient(newPat.id); openNewVisitForm();
     }
 
     // --- OPD LOGS FILTER SEARCH (DATE PREFIX & SYMPTOMS) ---
@@ -951,21 +925,13 @@
       document.getElementById('visit-modal-pat-mob').innerText = activePatient.mobile;
 
       const now = new Date();
-      const yy = String(now.getFullYear()).slice(-2);
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const dateStr = `${yy}${mm}${dd}`;
-
-      const todayDateFormatted = now.toISOString().split('T')[0];
-      let todayCount = 0;
-      clinicData.patients.forEach(p => {
-        p.visits.forEach(v => {
-          if (v.date === todayDateFormatted) todayCount++;
-        });
-      });
-
-      const tokenCounter = String(todayCount + 1).padStart(2, '0');
-      document.getElementById('visit-token-id').value = `O-${dateStr}${tokenCounter}`;
+      const yy = String(now.getFullYear()).slice(-2), mm = String(now.getMonth()+1).padStart(2,'0'), dd = String(now.getDate()).padStart(2,'0');
+      const hh = String(now.getHours()).padStart(2,'0'), min = String(now.getMinutes()).padStart(2,'0');
+      const todayDateFormatted = now.getFullYear() + '-' + mm + '-' + dd;
+      const baseToken = 'O-' + yy + mm + dd + '-' + hh + min;
+      const usedTokens = new Set((clinicData.patients || []).flatMap(p => (p.visits || []).map(v => String(v.token || ''))));
+      let token = baseToken, suffix = 1; while (usedTokens.has(token)) token = baseToken + '-' + suffix++;
+      document.getElementById('visit-token-id').value = token;
       document.getElementById('visit-date').value = todayDateFormatted;
       document.getElementById('visit-age').value = "";
       document.getElementById('visit-symptoms').value = "";
@@ -1100,13 +1066,10 @@
       });
 
       const consultationFeeTitle = document.getElementById('visit-fee-title').value.trim() || 'Consultation Fee';
-      const visitData = { token, date, age: Number(age), symptoms, vitals, consultationFeeTitle, consultationFee, extraFees, totalFee, fee, notes, history, onset, onsetDuration, onsetPattern, extraVitals, extraNotes, rx: rxList };
-
-      if (editIndex >= 0) {
-        activePatient.visits[editIndex] = visitData;
-      } else {
-        activePatient.visits.push(visitData);
-      }
+      const previousVisit = editIndex >= 0 ? activePatient.visits[editIndex] : null;
+      const visitData = { ...(previousVisit || {}), token, date, createdAt: (previousVisit && previousVisit.createdAt) || new Date().toISOString(), age: Number(age), symptoms, vitals, consultationFeeTitle, consultationFee, extraFees, totalFee, fee, notes, history, onset, onsetDuration, onsetPattern, extraVitals, extraNotes, rx: rxList };
+      if (editIndex >= 0) activePatient.visits[editIndex] = visitData;
+      else activePatient.visits.push(visitData);
 
       saveToStorage();
       selectPatient(activePatient.id);
