@@ -91,6 +91,8 @@
     .pdf-export-layout .prescription-vitals-list { display:flex; flex-direction:column; align-items:flex-end; gap:2mm; margin-top:2mm; text-align:right; }
     .pdf-export-layout .prescription-vital-row { display:flex; justify-content:flex-end; gap:3mm; width:100%; }
     .pdf-export-layout .prescription-center-title { text-align:center; font-weight:800; font-size:14pt; margin:7mm 0 5mm; }
+    .pdf-export-layout .prescription-symptoms { margin-top:5mm; font-size:10pt; line-height:1.5; white-space:normal; overflow-wrap:anywhere; }
+    .pdf-export-layout .prescription-rx-label { font-size:13pt; font-weight:700; margin:5mm 0 1mm; }
     .pdf-export-layout .prescription-rx-table,.pdf-export-layout .invoice-table { width:100%; border-collapse:collapse; margin-top:4mm; font-size:9.5pt; }
     .pdf-export-layout .prescription-rx-table th,.pdf-export-layout .prescription-rx-table td,.pdf-export-layout .invoice-table th,.pdf-export-layout .invoice-table td { border:1px solid #888; padding:3mm 2.5mm; text-align:left; white-space:normal; }
     .pdf-export-layout .prescription-doctor-note { margin-top:7mm; font-size:10pt; line-height:1.5; }
@@ -134,6 +136,8 @@
       .prescription-vital-row strong { font-weight:700; }
       .prescription-vital-row span { overflow-wrap:anywhere; }
       .prescription-center-title { text-align:center; font-weight:800; font-size:14pt; margin:7mm 0 5mm; letter-spacing:1px; }
+      .prescription-symptoms { margin-top:5mm; font-size:10.5pt; line-height:1.5; white-space:normal; overflow-wrap:anywhere; }
+      .prescription-rx-label { font-size:13pt; font-weight:700; margin:5mm 0 1mm; }
       .prescription-clinical-info { font-size:10.5pt; line-height:1.5; margin-bottom:5mm; }
       .prescription-rx-table,.invoice-table { width:100%; border-collapse:collapse; margin-top:4mm; font-size:10.5pt; }
       .prescription-rx-table th,.prescription-rx-table td,.invoice-table th,.invoice-table td { border:1px solid #888; padding:3mm 2.5mm; text-align:left; white-space:normal; }
@@ -654,6 +658,8 @@
       <div style="text-align:right;"><strong>Date:</strong> <span id="print-date"></span><div style="margin-top:8px;"><strong>Vitals:</strong></div><div id="print-vitals-list" class="prescription-vitals-list"></div></div>
     </div>
     <div class="prescription-center-title">PRESCRIPTION</div>
+    <div id="print-symptoms-section" class="prescription-symptoms"><strong>Symptoms:</strong><div id="print-symptoms" style="white-space:pre-wrap;margin-top:2mm;"></div></div>
+    <div class="prescription-rx-label">Rx</div>
     <table class="prescription-rx-table"><thead><tr><th>Medicine Name</th><th>Route</th><th>Dosage</th><th>Timing</th><th>Duration</th></tr></thead><tbody id="print-rx-tbody"></tbody></table>
     <div id="print-notes-section" class="prescription-doctor-note"><strong>Doctor's Note / Advice:</strong><div id="print-notes" style="white-space:pre-wrap;margin-top:6px;"></div></div>
     <div class="prescription-doctor-signature"><div style="height:10mm;"></div><div style="border-top:1px solid #333;margin-bottom:2mm;"></div><strong>Dr. Abhilash A. Sondarkar</strong><div>B.H.M.S. (M.U.H.S.) M.D.(A.M.) PGDCC</div><div>Reg. No.: 65170</div></div>
@@ -1347,6 +1353,9 @@
 
     function triggerPrintSlip(patient, visit, outputMode = 'print') {
       document.getElementById('print-date').innerText = visit.date;
+      const symptomsText = String(visit.symptoms || 'General Consultation').trim();
+      document.getElementById('print-symptoms').innerText = symptomsText;
+      document.getElementById('print-symptoms-section').style.display = symptomsText ? 'block' : 'none';
       document.getElementById('print-token').innerText = visit.token;
       document.getElementById('print-pat-id').innerText = patient.id;
       document.getElementById('print-name').innerText = patient.name;
