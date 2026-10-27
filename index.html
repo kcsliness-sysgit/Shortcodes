@@ -81,11 +81,13 @@
     @media(max-width:700px){header{padding:14px;align-items:flex-start;gap:12px;flex-direction:column}header h2{font-size:1.15rem}.container{margin:12px auto;padding:0 10px}.card{padding:15px;border-radius:10px}.nav-tabs{margin-top:10px;gap:5px;padding:5px}.tab-btn{padding:9px 11px;font-size:.82rem}.form-grid{grid-template-columns:1fr;gap:12px}.patient-list-item{align-items:flex-start;flex-direction:column;gap:8px}.patient-list-item .btn{width:100%}#search-input{min-width:0}.rx-row{grid-template-columns:1fr 1fr}.rx-row .rx-med-name{grid-column:1/-1}.dynamic-field-row{grid-template-columns:1fr}table{display:block;overflow-x:auto;white-space:nowrap}#auth-wrapper{padding:16px;align-items:flex-start;padding-top:12vh}.login-card{padding:clamp(22px,5vw,34px);max-width:440px}.login-card h2{font-size:1.25rem}}
 
     .pdf-export-layout { display:block !important; width:180mm !important; min-height:267mm !important; box-sizing:border-box !important; background:#fff !important; color:#111 !important; font-family:Arial,sans-serif !important; font-size:10pt !important; position:relative !important; overflow:visible !important; }
-    .pdf-export-layout .prescription-letterhead { display:flex; justify-content:space-between; align-items:flex-start; gap:8mm; border:0; border-radius:0; padding:4mm 2mm 3mm; margin:0 0 4mm; font-size:11pt; line-height:1.5; position:relative; }
-    .pdf-export-layout .prescription-letterhead::after { content:""; position:absolute; bottom:0; left:0; right:0; height:0; border-bottom:1px solid #777; }
-    .pdf-export-layout .prescription-letterhead-left { text-align:left; flex:1; }
-    .pdf-export-layout .prescription-letterhead-right { text-align:right; flex:1; }
-    .pdf-export-layout .prescription-letterhead strong { font-size:12pt; }
+    .pdf-export-layout .prescription-letterhead { display:flex; justify-content:space-between; align-items:flex-start; gap:12mm; border:0; border-radius:0; padding:3mm 0 4mm; margin:0 0 4mm; font-size:10pt; line-height:1.4; position:relative; width:100%; }
+    .pdf-export-layout .prescription-letterhead::after { content:""; position:absolute; bottom:0; left:0; right:0; width:100%; height:0; border-bottom:1px solid #777; }
+    .pdf-export-layout .prescription-letterhead-left { text-align:left; flex:1; min-width:0; }
+    .pdf-export-layout .prescription-letterhead-right { text-align:right; flex:1; min-width:0; }
+    .pdf-export-layout .prescription-letterhead-left strong { display:block; font-family:Georgia,"Times New Roman",serif; font-size:17pt; font-weight:700; line-height:1.2; letter-spacing:.1px; margin-bottom:1.5mm; }
+    .pdf-export-layout .prescription-letterhead-right strong { display:block; font-family:Georgia,"Times New Roman",serif; font-size:14pt; font-weight:700; line-height:1.2; margin-bottom:1.5mm; }
+    .pdf-export-layout .prescription-letterhead-left div,.pdf-export-layout .prescription-letterhead-right div { font-family:Arial,sans-serif; font-size:9.5pt; line-height:1.4; }
     .pdf-export-layout .clinic-evening-time { padding-right:0; }
     .pdf-export-layout .prescription-patient-grid { display:flex; justify-content:space-between; align-items:flex-start; gap:10mm; font-size:10pt; border:1px solid #888; border-radius:2mm; padding:4mm; margin:0 0 3mm; background:#fff; }
     .pdf-export-layout .prescription-patient-grid > div { width:50%; }
@@ -125,12 +127,13 @@
       body.printing-invoice #printable-invoice * { visibility:visible !important; }
       body.printing-prescription #printable-prescription .hidden,
       body.printing-invoice #printable-invoice .hidden { display:none !important; }
-      .prescription-letterhead { display:flex; justify-content:space-between; align-items:flex-start; gap:8mm; border:0; border-radius:0; padding:4mm 2mm 3mm; margin:0 0 4mm; font-size:11pt; line-height:1.5; position:relative; }
-      .prescription-letterhead::after { content:""; position:absolute; bottom:0; left:0; right:0; height:0; border-bottom:1px solid #777; }
-      .prescription-letterhead strong { font-size:12pt; }
-      .prescription-letterhead-left { text-align:left; flex:1; }
-      .prescription-letterhead-right { text-align:right; flex:1; }
-      .prescription-letterhead strong { font-size:10pt; }
+      .prescription-letterhead { display:flex; justify-content:space-between; align-items:flex-start; gap:12mm; border:0; border-radius:0; padding:3mm 0 4mm; margin:0 0 4mm; font-size:10pt; line-height:1.4; position:relative; width:100%; }
+      .prescription-letterhead::after { content:""; position:absolute; bottom:0; left:0; right:0; width:100%; height:0; border-bottom:1px solid #777; }
+      .prescription-letterhead-left { text-align:left; flex:1; min-width:0; }
+      .prescription-letterhead-right { text-align:right; flex:1; min-width:0; }
+      .prescription-letterhead-left strong { display:block; font-family:Georgia,"Times New Roman",serif; font-size:17pt; font-weight:700; line-height:1.2; letter-spacing:.1px; margin-bottom:1.5mm; }
+      .prescription-letterhead-right strong { display:block; font-family:Georgia,"Times New Roman",serif; font-size:14pt; font-weight:700; line-height:1.2; margin-bottom:1.5mm; }
+      .prescription-letterhead-left div,.prescription-letterhead-right div { font-family:Arial,sans-serif; font-size:9.5pt; line-height:1.4; }
       .clinic-evening-time { padding-right:0; }
       .prescription-patient-grid { display:flex; justify-content:space-between; align-items:flex-start; gap:12mm; font-size:11pt; border:1px solid #888; border-radius:2mm; padding:4mm; margin:0 0 3mm; background:#fff; }
       .prescription-patient-grid > div { width:50%; }
